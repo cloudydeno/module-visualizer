@@ -102,7 +102,7 @@ for (const [before, after] of jspmCollapses) {
 }
 
 console.log(`digraph "imported modules" {`);
-// console.log("  rankdir=LR;");
+console.log(`  rankdir=${JSON.stringify(args.get('rankdir') || 'TB')};`);
 for (const module of modules.values()) {
   // console.log(module.base, Array.from(module.deps.values()).map(x => x.base));
 

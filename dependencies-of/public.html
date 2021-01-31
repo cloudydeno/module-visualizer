@@ -83,9 +83,13 @@ div#graph-error {
   <input type="url" name="url" class="url"
       required value="{{ module_url }}"
       placeholder="https://deno.land/x/..." pattern="https://.+" />
+  <select name="rankdir">
+    <option value="TB">Top-to-bottom</option>
+    <option value="LR">Left-to-right</option>
+  </select>
   <select name="std">
-    <option value="combine">Combine /std as one module</option>
-    <option value="isolate">Isolate /std into subfolders</option>
+    <option value="combine">Treat /std as one module</option>
+    <option value="isolate">Break /std up into subfolders</option>
   </select>
   <button type="submit">Render</button>
 </form>
@@ -97,6 +101,7 @@ div#graph-error {
 
     const args = new URLSearchParams(document.location.search);
     form.std.value = args.get('std') || 'combine';
+    form.rankdir.value = args.get('rankdir') || 'TB';
 
     form.addEventListener('submit', evt => {
       evt.preventDefault();
@@ -110,6 +115,9 @@ div#graph-error {
       const args = new URLSearchParams;
       if (evt.target.std.value !== 'combine') {
         args.set('std', evt.target.std.value);
+      }
+      if (evt.target.rankdir.value !== 'TB') {
+        args.set('rankdir', evt.target.rankdir.value);
       }
 
       const newUrl = new URL(window.location);
