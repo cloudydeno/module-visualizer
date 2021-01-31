@@ -1,6 +1,6 @@
 import { filesize } from "https://cloudydeno.github.io/deno-bitesized/formatting/filesize@v1.ts";
 
-import { CodeModule } from "./types.ts";
+import { CodeModule, DenoInfo } from "./types.ts";
 import * as registries from "./registries.ts";
 
 const rawData = new TextDecoder().decode(await Deno.readAll(Deno.stdin));
@@ -121,17 +121,3 @@ for (const module of modules.values()) {
   }
 }
 console.log("}");
-
-interface DenoInfo {
-  compiled: string;
-  depCount: number;
-  fileType: string;
-  local: string;
-  map: unknown;
-  module: string;
-  totalSize: number;
-  files: {[url: string]: {
-    deps: string[];
-    size: number;
-  }};
-};
