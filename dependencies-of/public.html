@@ -37,14 +37,17 @@ header {
   grid-area: header;
   margin: 1em 2em 0;
 }
-h1, h2 {
+h1, h2, h3 {
   margin: 0;
   line-height: 1.3;
 }
-h2 {
+h2, h3 {
   font-weight: 400;
 }
-h2 a:not(:hover) {
+hgroup > * {
+  display: inline;
+}
+hgroup a:not(:hover) {
   text-decoration: none;
 }
 form {
@@ -77,8 +80,12 @@ div#graph-error {
 
 <header>
   <h1>Deno Module Dependency Graph</h1>
-  <h2>Showing
-    <a href="{{ module_url }}" target="_blank">{{ module_url }}</a></h2>
+  <hgroup>
+    <h2>Showing
+      <a href="{{ module_url }}" target="_blank">{{ module_url }}</a>
+    </h2>
+    <h3>[<a href="/svg{{ current_path }}">svg</a>]</h3>
+  </hgroup>
 </header>
 
 <form id="query">

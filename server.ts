@@ -80,7 +80,7 @@ function serveSvg(req: ServerRequest, modUrl: string, args: URLSearchParams) {
         'content-type': 'text/plain',
       }),
     }))
-    .then(req.respond);
+    .then(resp => req.respond(resp));
 }
 
 async function servePublic(req: ServerRequest, path: string, status = 200) {
@@ -105,6 +105,8 @@ async function servePublic(req: ServerRequest, path: string, status = 200) {
 }
 
 async function serveDependenciesOf(req: ServerRequest, url: string, args: URLSearchParams) {
+  args.set('font', 'Pragati Narrow');
+
   const [template, fullSvg] = await Promise.all([
     Deno.readTextFile('dependencies-of/public.html'),
     generateSvg(url, args).then(
@@ -113,7 +115,8 @@ async function serveDependenciesOf(req: ServerRequest, url: string, args: URLSea
   ]);
 
   const html = template
-    .replace(/{{ module_url }}/g, entities.encode(url));
+  .replace(/{{ module_url }}/g, entities.encode(url))
+  .replace(/{{ current_path }}/g, entities.encode(req.url));
 
   const inlineSvg = fullSvg
     .slice(fullSvg.indexOf('<!--'))
