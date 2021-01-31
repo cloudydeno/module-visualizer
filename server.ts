@@ -45,7 +45,7 @@ for await (const req of serve({ port })) {
 async function generateSvg(modUrl: string, args: URLSearchParams) {
   const proc = Deno.run({
     cwd: 'dependencies-of',
-    cmd: ["./imports-render.sh", modUrl, "svg", args.toString()],
+    cmd: ["./render.sh", modUrl, "svg", args.toString()],
     stdin: 'null',
     stdout: 'piped',
     stderr: 'inherit',
@@ -106,7 +106,7 @@ async function servePublic(req: ServerRequest, path: string, status = 200) {
 
 async function serveDependenciesOf(req: ServerRequest, url: string, args: URLSearchParams) {
   const [template, fullSvg] = await Promise.all([
-    Deno.readTextFile('public/dependencies-of.html'),
+    Deno.readTextFile('dependencies-of/public.html'),
     generateSvg(url, args).then(
       raw => new TextDecoder().decode(raw),
       err => `<!-- error -->\n<div id="graph-error">${err.message}</div>`),
