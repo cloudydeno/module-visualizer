@@ -29,12 +29,15 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
       if (parts[3] !== '-') parts.splice(3, 0, '-');
       return 'https://cdn.skypack.dev/'+parts.slice(3, 5 + (parts[4][0] === '@' ? 1 : 0)).join('/');
     case 'dev.jspm.io':
-    case 'jspm.dev':
+    case 'jspm.dev': {
       if (!parts[3].includes(':')) {
         parts[3] = `npm:${parts[3]}`;
       }
       const path = parts.slice(0, 4 + (parts[3].includes(':@') ? 1 : 0)).join('/');
       return path.split(/[?!]/)[0];
+    }
+    case 'cdn.pagic.org':
+      return parts.slice(0, 4 + (parts[3][0] == '@' ? 1 : 0)).join('/');
     default:
       if (url.hostname.endsWith('.github.io')) {
         return parts.slice(0, 4).join('/');
@@ -95,6 +98,8 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
         parts[3] = parts[3].slice(4);
       }
       return [parts.slice(3).join('/'), `from ${parts[2]}`];
+    case 'cdn.pagic.org':
+      return [parts.slice(3).join('/'), `from ${parts[2]}`];
     default:
       if (url.hostname.endsWith('.github.io')) {
         const username = url.hostname.split('.')[0];
@@ -126,6 +131,8 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
     case 'dev.jspm.io':
     case 'jspm.dev':
       return { fillcolor: 'palevioletred', href: makeNpmHref(url.pathname.slice(5)) };
+    case 'cdn.pagic.org':
+      return { fillcolor: 'rosybrown', href: makeNpmHref(url.pathname.slice(1)) };
     default:
       if (url.hostname.endsWith('.github.io')) {
         const username = url.hostname.split('.')[0];
