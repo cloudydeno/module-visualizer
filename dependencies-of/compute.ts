@@ -107,7 +107,7 @@ for (const module of modules.values()) {
   // console.log(module.base, Array.from(module.deps.values()).map(x => x.base));
 
   const labels = determineModuleLabel(module);
-  labels.push(`${module.files.length} files, ${filesize(module.totalSize)}`);
+  labels.push(`${module.files.length} files, ${filesize(module.totalSize, {round: 0})}`);
   const nodeAttrs = {
     shape: 'box',
     label: labels.join('\n')+'\n',
