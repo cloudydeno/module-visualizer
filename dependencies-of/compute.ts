@@ -104,7 +104,7 @@ for (const module of modules.values()) {
     shape: 'box',
     label: labels.join('\n')+'\n',
     penwidth: `${Math.log(Math.max(module.files.length/2, 1))+1}`,
-    fontname: args.get('font'),
+    fontname: args.get('font') || 'Arial',
     style: 'filled',
     tooltip: module.base,
     ...registries.determineModuleAttrs(module),
