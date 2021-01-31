@@ -41,6 +41,9 @@ h1, h2 {
   margin: 0;
   line-height: 1.3;
 }
+h2 {
+  font-weight: 400;
+}
 h2 a:not(:hover) {
   text-decoration: none;
 }
@@ -79,7 +82,7 @@ div#graph-error {
 </header>
 
 <form id="query">
-  <span>View another module:</span>
+  <span>Module URL:</span>
   <input type="url" name="url" class="url"
       required value="{{ module_url }}"
       placeholder="https://deno.land/x/..." pattern="https://.+" />

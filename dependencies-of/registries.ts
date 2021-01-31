@@ -61,6 +61,9 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
       // return [parts.slice(2).join('/')];
       return [parts.slice(4).join('/'), `from ${parts[2]}/${parts[3]}`];
     case 'raw.githubusercontent.com':
+      if (parts[5].length >= 20) {
+        return [parts[4], '  @ '+parts[5], `from github.com/${parts[3]}`];
+      }
       return [parts.slice(4).join('@'), `from github.com/${parts[3]}`];
     case 'cdn.skypack.dev':
       let modName = parts[4];
@@ -75,6 +78,10 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
       }
       return [parts.slice(3).join('/'), `from ${parts[2]}`];
     default:
+      if (url.hostname.endsWith('.github.io')) {
+        const username = url.hostname.split('.')[0];
+        return [parts.slice(3).join('/'), `from github.com/${username}`];
+      }
       return [module.base];
   }
 }
@@ -103,7 +110,8 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
       return { fillcolor: 'palevioletred', href: makeNpmHref(url.pathname.slice(5)) };
     default:
       if (url.hostname.endsWith('.github.io')) {
-        const href = `https://github.com/${url.hostname.split('.')[0]}/${parts[1]}`;
+        const username = url.hostname.split('.')[0];
+        const href = `https://github.com/${username}/${parts[1]}`;
         return { fillcolor: 'cornsilk3', href };
       }
       return { fillcolor: 'cornsilk3' };
