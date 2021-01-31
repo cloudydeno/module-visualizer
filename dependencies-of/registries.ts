@@ -37,6 +37,7 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
       return path.split(/[?!]/)[0];
     }
     case 'cdn.pagic.org':
+    case 'unpkg.com':
       return parts.slice(0, 4 + (parts[3][0] == '@' ? 1 : 0)).join('/');
     default:
       if (url.hostname.endsWith('.github.io')) {
@@ -99,6 +100,7 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
       }
       return [parts.slice(3).join('/'), `from ${parts[2]}`];
     case 'cdn.pagic.org':
+    case 'unpkg.com':
       return [parts.slice(3).join('/'), `from ${parts[2]}`];
     default:
       if (url.hostname.endsWith('.github.io')) {
@@ -132,6 +134,7 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
     case 'jspm.dev':
       return { fillcolor: 'palevioletred', href: makeNpmHref(url.pathname.slice(5)) };
     case 'cdn.pagic.org':
+    case 'unpkg.com':
       return { fillcolor: 'rosybrown', href: makeNpmHref(url.pathname.slice(1)) };
     default:
       if (url.hostname.endsWith('.github.io')) {
