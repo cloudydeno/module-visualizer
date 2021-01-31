@@ -21,13 +21,17 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
     case 'cdn.skypack.dev':
       if (parts[3] !== '-') parts.splice(3, 0, '-');
       return parts.slice(0, 5 + (parts[4][0] === '@' ? 1 : 0)).join('/');
+    case 'cdn.pika.dev':
+      // skypack precursor, just redirects, so roll with it
+      if (parts[3] !== '-') parts.splice(3, 0, '-');
+      return 'https://cdn.skypack.dev/'+parts.slice(3, 5 + (parts[4][0] === '@' ? 1 : 0)).join('/');
     case 'dev.jspm.io':
     case 'jspm.dev':
       if (!parts[3].includes(':')) {
         parts[3] = `npm:${parts[3]}`;
       }
       const path = parts.slice(0, 4 + (parts[3].includes(':@') ? 1 : 0)).join('/');
-      return path.split('?')[0];
+      return path.split(/[?!]/)[0];
     default:
       if (url.hostname.endsWith('.github.io')) {
         return parts.slice(0, 4).join('/');
