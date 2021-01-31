@@ -46,20 +46,24 @@ async function generateSvg(modUrl: string, args: URLSearchParams) {
   const proc = Deno.run({
     cwd: 'dependencies-of',
     cmd: ["./render.sh", modUrl, "svg", args.toString()],
+    env: {'NO_COLOR': 'yas'},
     stdin: 'null',
     stdout: 'piped',
-    stderr: 'inherit',
+    stderr: 'piped',
   });
 
-  const [data, status] = await Promise.all([
+  const [data, progress, status] = await Promise.all([
     Deno.readAll(proc.stdout),
+    Deno.readAll(proc.stderr),
     proc.status(),
   ]);
+  Deno.writeAll(Deno.stderr, progress);
 
   if (status.code !== 0) {
     throw new Error(`Graph rendering resulted in exit code ${status.code}`);
   } else if (data.length < 2) {
-    throw new Error(`Unable to build graph. Is there really a module served at that URL?`);
+    const error = new TextDecoder().decode(progress).split('\n').find(x => x.startsWith('error: ')) || 'Is there really a module served at that URL?';
+    throw new Error(`Unable to build graph. ${error}`);
   } else {
     return data;
   }
