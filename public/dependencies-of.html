@@ -1,0 +1,122 @@
+<!doctype html>
+<title>Module Dependency Graph | {{ module_url }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Pragati+Narrow:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-W6JJL92QS8"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-W6JJL92QS8');
+</script>
+
+<style type="text/css">
+body {
+  font-family: 'Pragati Narrow', sans-serif;
+  color: #111;
+
+  display: grid;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+
+  grid-template-columns: 1fr;
+  /*grid-template-columns: repeat(3, 1fr);*/
+  grid-gap: 1em;
+  grid-template-rows: auto auto 1fr;
+  /*grid-auto-rows: minmax(100px, auto);*/
+  grid-template-areas:
+    "header"
+    "form"
+    "graph";
+}
+header {
+  grid-area: header;
+  margin: 1em 2em 0;
+}
+h1, h2 {
+  margin: 0;
+  line-height: 1.3;
+}
+h2 a:not(:hover) {
+  text-decoration: none;
+}
+form {
+  grid-area: form;
+  display: none;
+  margin: 0 2em;
+}
+form span {
+  margin-right: 0.5em;
+}
+input.url {
+  width: auto;
+  flex: 1;
+}
+#graph {
+  grid-area: graph;
+  max-height: 100%;
+}
+#graph text {
+  fill: #111;
+}
+div#graph-error {
+  grid-area: graph;
+  font-size: 1.8em;
+  background-color: rgba(255,100,100,0.3);
+  padding: 2em;
+  text-align: center;
+}
+</style>
+
+<header>
+  <h1>Deno Module Dependency Graph</h1>
+  <h2>Showing
+    <a href="{{ module_url }}" target="_blank">{{ module_url }}</a></h2>
+</header>
+
+<form id="query">
+  <span>View another module:</span>
+  <input type="url" name="url" class="url"
+      required value="{{ module_url }}"
+      placeholder="https://deno.land/x/..." pattern="https://.+" />
+  <select name="std">
+    <option value="combine">Combine /std as one module</option>
+    <option value="isolate">Isolate /std into subfolders</option>
+  </select>
+  <button type="submit">Render</button>
+</form>
+
+<script type="text/javascript">
+  const form = document.querySelector('form#query');
+  if (form) {
+    form.style.display = 'flex';
+
+    const args = new URLSearchParams(document.location.search);
+    form.std.value = args.get('std') || 'combine';
+
+    form.addEventListener('submit', evt => {
+      evt.preventDefault();
+
+      const url = new URL(evt.target.url.value);
+      if (url.protocol !== 'https:') {
+        return alert('Only https modules are accepted');
+      }
+      const modId = `https/${url.host}${url.pathname}`;
+
+      const args = new URLSearchParams;
+      if (evt.target.std.value !== 'combine') {
+        args.set('std', evt.target.std.value);
+      }
+
+      const newUrl = new URL(window.location);
+      newUrl.pathname = `dependencies-of/${modId}`;
+      newUrl.search = args.toString();
+
+      window.location = newUrl.toString();
+    });
+  }
+</script>
