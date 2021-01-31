@@ -8,6 +8,9 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
     case 'deno.land':
       if (parts[3].startsWith('std') && !isolateStd) return parts.slice(0, 4).join('/');
       return parts.slice(0, 5).join('/');
+    case 'cdn.deno.land':
+      if (parts[3] === 'std' && isolateStd) return parts.slice(0, 8).join('/');
+      return parts.slice(0, 6).join('/');
     case 'esm.sh':
       return parts.slice(0, 4 + (parts[3][0] === '@' ? 1 : 0)).join('/');
     case 'cdn.esm.sh':
@@ -52,13 +55,24 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
   const parts = module.base.split('/');
   if (url.protocol !== 'https:') return [module.base];
   switch (url.host) {
-    case 'deno.land':
+    case 'deno.land': {
       let extra = new Array<string>();
       if (parts[3].startsWith('std') && !isolateStd) {
         const folders = new Set(module.files.map(x => x.url.split('/')[4]));
         extra = Array.from(folders).map(x => `    • /${x}`);
       }
       return ['/'+parts.slice(3).join('/'), ...extra];
+    }
+    case 'cdn.deno.land': {
+      let extra = new Array<string>();
+      if (parts[3] === 'std' && !isolateStd) {
+        const folders = new Set(module.files.map(x => x.url.split('/')[7]));
+        extra = Array.from(folders).map(x => `    • /${x}`);
+      }
+      let modName = `/${parts[3]}@${parts[5]}`;
+      if (parts[3] !== 'std') modName = `/x${modName}`;
+      return [[modName, ...parts.slice(7)].join('/'), `from ${parts[2]}`, ...extra];
+    }
     case 'esm.sh':
       return [parts.slice(3).join('/'), `from ${parts[2]}`];
     case 'cdn.esm.sh':
