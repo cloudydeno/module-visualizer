@@ -70,6 +70,10 @@ const jspmCollapses = new Map<CodeModule, CodeModule>();
 for (const [key, module] of modules) {
   if (!key.startsWith('https://dev.jspm.io/') && !key.startsWith('https://jspm.dev/')) continue;
   let prefix = (key+'.').replace(/latest\.$/, '');
+  if (!prefix.replace(/[:/]@/g, '').includes('@')) {
+    prefix = prefix.replace(/\.$/, '@');
+    console.error(prefix);
+  }
   for (const dep of module.deps.values()) {
     if (dep.base.startsWith(prefix)) {
       jspmCollapses.set(module, dep);
