@@ -16,6 +16,9 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
     case 'cdn.esm.sh':
       if (parts[4][0] === '_') return parts.slice(0,4).join('/')+'/_internal';
       return parts.slice(0, 5 + (parts[4][0] === '@' ? 1 : 0)).join('/');
+    case 'cdn.dreg.dev':
+      if (parts[3] !== 'package') return parts.slice(0,4).join('/');
+      return parts.slice(0, 5 + (parts[4][0] === '@' ? 1 : 0)).join('/');
     case 'raw.githubusercontent.com':
       return parts.slice(0, 6).join('/');
     case 'denopkg.com':
@@ -82,6 +85,9 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
     case 'cdn.esm.sh':
       // return [parts.slice(2).join('/')];
       return [parts.slice(4).join('/'), `from ${parts[2]}/${parts[3]}`];
+    case 'cdn.dreg.dev':
+      if (parts[3] !== 'package') return [parts.slice(0,4).join('/')];
+      return [parts.slice(4).join('/'), `from ${parts[2]}`];
     case 'raw.githubusercontent.com':
       if (parts[5].length >= 20) {
         return [parts[4], '  @ '+parts[5], `from github.com/${parts[3]}`];
@@ -124,6 +130,8 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
       return { fillcolor: 'cornsilk', href: makeNpmHref(parts.slice(2).join('/')) };
     case 'esm.sh':
       return { fillcolor: 'cadetblue1', href: makeNpmHref(url.pathname.slice(1)) };
+    case 'cdn.dreg.dev':
+      return { fillcolor: 'wheat', href: makeNpmHref(parts.slice(2).join('/')) };
     case 'raw.githubusercontent.com':
       const href = `https://github.com/${parts[1]}/${parts[2]}/tree/${parts[3]}`;
       return { fillcolor: 'chocolate1', href };
@@ -147,7 +155,7 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
 }
 
 function makeNpmHref(packageId: string) {
-  if (packageId.startsWith('_')) return '';
+  if (!packageId || packageId.startsWith('_')) return '';
   let url: string;
   if (packageId.startsWith('@')) {
     const parts = packageId.slice(1).split('@');
