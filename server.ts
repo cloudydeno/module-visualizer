@@ -34,11 +34,14 @@ for await (const req of serve({ port })) {
   }
 
   if (url.pathname === '/') {
-    servePublic(req, 'index.html');
-  // } else if (['/depends-on.html'].includes(url.pathname)) {
-  //   servePublic(req, url.pathname);
+    serveTemplatedHtml(req, 'public/index.html');
+  } else if (['/global.css'].includes(url.pathname)) {
+    servePublic(req, url.pathname);
   } else {
-    servePublic(req, '404.html', 404);
+    req.respond({
+      status: 404,
+      body: '404 Not Found',
+    });
   }
 }
 
@@ -87,6 +90,53 @@ function serveSvg(req: ServerRequest, modUrl: string, args: URLSearchParams) {
     .then(resp => req.respond(resp));
 }
 
+async function serveTemplatedHtml(req: ServerRequest, templatePath: string, replacements: Record<string,string> = {}) {
+  try {
+
+    const [
+      template,
+      globals,
+      github_corner,
+    ] = await Promise.all([
+      Deno.readTextFile(templatePath),
+      Deno.readTextFile('partials/global.html'),
+      Deno.readTextFile('partials/github_corner.html'),
+    ]);
+
+    const allReplacements: typeof replacements = {
+      ...replacements,
+      globals,
+      github_corner,
+    };
+
+    const final = template.replace(/{{ [^}]+ }}/g, orig => {
+      const token = orig.slice(3, -3);
+      return allReplacements[token] ?? orig;
+    });
+
+    req.respond({
+      status: 200,
+      body: final,
+      headers: new Headers({
+        'content-type': 'text/html; charset=utf-8',
+      }),
+    });
+
+  } catch (err) {
+    if (err.name === 'NotFound') {
+      req.respond({
+        status: 404,
+        body: '404 Not Found',
+      });
+    } else {
+      req.respond({
+        status: 500,
+        body: err.message,
+      });
+    }
+  }
+}
+
 async function servePublic(req: ServerRequest, path: string, status = 200) {
   try {
     req.respond({
@@ -108,29 +158,21 @@ async function servePublic(req: ServerRequest, path: string, status = 200) {
   }
 }
 
-async function serveDependenciesOf(req: ServerRequest, url: string, args: URLSearchParams) {
+async function serveDependenciesOf(req: ServerRequest, modUrl: string, args: URLSearchParams) {
   args.set('font', 'Pragati Narrow');
 
-  const [template, fullSvg] = await Promise.all([
-    Deno.readTextFile('dependencies-of/public.html'),
-    generateSvg(url, args).then(
-      raw => new TextDecoder().decode(raw),
-      err => `<!-- error -->\n<div id="graph-error">${err.message}</div>`),
-  ]);
+  const svgText = await generateSvg(modUrl, args).then(
+    raw => {
+      const fullSvg = new TextDecoder().decode(raw);
+      return fullSvg
+        .slice(fullSvg.indexOf('<!--'))
+        .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg id="graph"');
+    },
+    err => `<div id="graph-error">${err.message}</div>`);
 
-  const html = template
-  .replace(/{{ module_url }}/g, entities.encode(url))
-  .replace(/{{ current_path }}/g, entities.encode(req.url));
-
-  const inlineSvg = fullSvg
-    .slice(fullSvg.indexOf('<!--'))
-    .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg id="graph"');
-
-  req.respond({
-    status: 200,
-    body: `${html}\n${inlineSvg}`,
-    headers: new Headers({
-      'content-type': 'text/html; charset=utf-8',
-    }),
+  await serveTemplatedHtml(req, 'dependencies-of/public.html', {
+    graph_svg: svgText,
+    module_url: entities.encode(modUrl),
+    current_path: entities.encode(req.url),
   });
 }
