@@ -1,5 +1,5 @@
 <!doctype html>
-<title>Module Dependency Graph | {{ module_url }}</title>
+<title>Module Dependencies | {{ module_url }}</title>
 {{ globals }}
 
 <style type="text/css">
@@ -19,38 +19,76 @@ body {
     "form"
     "graph";
 }
+h2 {
+  word-break: break-word;
+}
+form#query {
+  grid-template-areas: "label url options submit";
+  grid-template-columns: auto 1fr auto auto;
+}
+#query .options {
+  display: flex;
+  justify-content: stretch;
+}
+#query select {
+  flex: 1;
+}
+
+@media (max-width: 800px) {
+  form#query {
+    grid-template-areas: "label url url" "options options submit";
+    grid-template-columns: auto 1fr auto;
+  }
+  header h1 {
+    font-size: 1.5em;
+  }
+  header h2 {
+    font-size: 1em;
+  }
+}
+@media (max-width: 500px) {
+  #query .options {
+    flex-direction: column;
+  }
+}
 </style>
 
 <header>
-  <h1>Deno Module Dependency Graph</h1>
+  <h1>
+    <a href="/">Deno Visualizer</a>:
+    Dependencies
+  </h1>
   <hgroup>
-    <h2>Showing
-      <a href="{{ module_url }}" target="_blank">{{ module_url }}</a>
+    <h2>Showing&nbsp;<a href="{{ module_url }}" target="_blank">{{ module_url }}</a>
     </h2>
     <h3>[<a href="/svg{{ current_path }}">svg</a>]</h3>
   </hgroup>
 </header>
 
 <form id="query">
-  <span>Module URL:</span>
-  <input type="url" name="url" class="url"
+  <span style="grid-area: label">Module URL:</span>
+  <input type="url" name="url" class="url" style="grid-area: url"
       required value="{{ module_url }}"
       placeholder="https://deno.land/x/..." pattern="https://.+" />
-  <select name="rankdir">
-    <option value="TB">Top-to-bottom</option>
-    <option value="LR">Left-to-right</option>
-  </select>
-  <select name="std">
-    <option value="combine">Treat /std as one module</option>
-    <option value="isolate">Break /std up into subfolders</option>
-  </select>
-  <button type="submit">Render</button>
+  <div class="options" style="grid-area: options;">
+    <select name="rankdir">
+      <option value="TB">Top-down</option>
+      <option value="LR">Left to right</option>
+      <option value="BT">Bottom-up</option>
+      <option value="RL">Right to left</option>
+    </select>
+    <select name="std">
+      <option value="combine">Treat /std as one module</option>
+      <option value="isolate">Break /std up into subfolders</option>
+    </select>
+  </div>
+  <button type="submit" style="grid-area: submit">Render</button>
 </form>
 
 <script type="text/javascript">
   const form = document.querySelector('form#query');
   if (form) {
-    form.style.display = 'flex';
+    form.style.display = 'grid';
 
     const args = new URLSearchParams(document.location.search);
     form.std.value = args.get('std') || 'combine';
