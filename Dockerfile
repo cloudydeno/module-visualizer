@@ -1,6 +1,6 @@
 FROM hayd/alpine-deno:1.7.1
 RUN apk add --no-cache graphviz
-ADD https://github.com/Omnibus-Type/PragatiNarrow/raw/master/Fonts/PragatiNarrow-Regular.ttf https://github.com/matomo-org/travis-scripts/raw/master/fonts/Arial.ttf /usr/share/fonts/truetype/
+ADD https://github.com/Omnibus-Type/ArchivoNarrow/raw/master/fonts/ttf/ArchivoNarrow-Regular.ttf https://github.com/matomo-org/travis-scripts/raw/master/fonts/Arial.ttf /usr/share/fonts/truetype/
 WORKDIR /src
 ADD . .
 RUN deno cache server.ts dependencies-of/compute.ts

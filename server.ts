@@ -175,7 +175,7 @@ async function servePublic(req: ServerRequest, path: string, status = 200) {
 }
 
 async function serveDependenciesOf(req: ServerRequest, modUrl: string, args: URLSearchParams) {
-  args.set('font', 'Pragati Narrow');
+  args.set('font', 'Archivo Narrow');
 
   const svgText = await generateSvgStream(modUrl, args)
     .then(dotProc => dotProc.captureAllOutput())
