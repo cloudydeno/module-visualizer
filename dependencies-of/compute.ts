@@ -1,4 +1,4 @@
-import { filesize } from "https://cloudydeno.github.io/deno-bitesized/formatting/filesize@v1.ts";
+import { filesize } from "../deps.ts";
 
 import { CodeModule, DenoInfo } from "./types.ts";
 import * as registries from "./registries.ts";

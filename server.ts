@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.85.0/http/server.ts";
+import { http } from "./deps.ts";
 
 import * as DependenciesOf from './dependencies-of/api.ts';
 import { servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
@@ -10,7 +10,7 @@ try {
   console.error(`WARN: failed to read $PORT due to ${err.name}`);
 }
 
-for await (const req of serve({ port })) {
+for await (const req of http.serve({ port })) {
   console.log(req.method, req.url);
   const url = new URL(req.url, 'http://localhost');
   const args = new URLSearchParams(url.search);

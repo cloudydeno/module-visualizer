@@ -1,10 +1,9 @@
-import { ServerRequest } from "https://deno.land/std@0.85.0/http/server.ts";
-import * as entities from "https://deno.land/x/html_entities@v1.0/lib/xml-entities.js";
+import { http, entities } from "../deps.ts";
 
 import { SubProcess, SubprocessErrorData } from '../lib/subprocess.ts';
 import { serveTemplatedHtml, makeErrorResponse } from '../lib/request-handling.ts';
 
-export function handleRequest(req: ServerRequest, modUrl: string, args: URLSearchParams) {
+export function handleRequest(req: http.ServerRequest, modUrl: string, args: URLSearchParams) {
   switch (args.get('format')) {
     case 'json':
       serveStreamingOutput(req, computeGraph(modUrl, args), 'application/json');
@@ -52,14 +51,14 @@ async function generateSvgStream(modUrl: string, args: URLSearchParams) {
   return dotProc;
 }
 
-async function serveStreamingOutput(req: ServerRequest, computation: Promise<SubProcess>, contentType: string) {
+async function serveStreamingOutput(req: http.ServerRequest, computation: Promise<SubProcess>, contentType: string) {
   req.respond(await computation
     .then(proc => proc.toStreamingResponse({
       'content-type': contentType,
     }), makeErrorResponse));
 }
 
-async function serveHtmlGraphPage(req: ServerRequest, modUrl: string, args: URLSearchParams) {
+async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, args: URLSearchParams) {
   args.set('font', 'Archivo Narrow');
 
   const svgText = await generateSvgStream(modUrl, args)

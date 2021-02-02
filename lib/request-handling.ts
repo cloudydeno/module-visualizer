@@ -1,7 +1,6 @@
-import { ServerRequest, Response } from "https://deno.land/std@0.85.0/http/server.ts";
-import { serveFile } from "https://deno.land/std@0.85.0/http/file_server.ts";
+import { http, file_server } from "../deps.ts";
 
-export async function serveTemplatedHtml(req: ServerRequest, templatePath: string, replacements: Record<string,string> = {}) {
+export async function serveTemplatedHtml(req: http.ServerRequest, templatePath: string, replacements: Record<string,string> = {}) {
   try {
 
     const [
@@ -38,10 +37,10 @@ export async function serveTemplatedHtml(req: ServerRequest, templatePath: strin
   }
 }
 
-export async function servePublic(req: ServerRequest, path: string, status = 200) {
+export async function servePublic(req: http.ServerRequest, path: string, status = 200) {
   try {
     req.respond({
-      ...await serveFile(req, 'public/'+path),
+      ...await file_server.serveFile(req, 'public/'+path),
       status,
     });
   } catch (err) {
@@ -49,7 +48,7 @@ export async function servePublic(req: ServerRequest, path: string, status = 200
   }
 }
 
-export function makeErrorResponse(err: Error): Response {
+export function makeErrorResponse(err: Error): http.Response {
   const headers = new Headers({
     'content-type': 'text/plain',
   });
