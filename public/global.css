@@ -46,12 +46,20 @@ input.url {
 #graph text {
   fill: #111;
 }
-div#graph-error {
+#graph-error {
   grid-area: graph;
   font-size: 1.8em;
-  background-color: rgba(255,100,100,0.3);
+  background-color: rgba(255, 100, 100, 0.3);
   padding: 2em;
   text-align: center;
+}
+#graph-error p {
+  text-align: left;
+}
+#graph-error code {
+  background-color: rgba(255, 255, 255, 0.4);
+  padding: 0.2em 0.5em;
+  border-radius: 0.3em;
 }
 
 

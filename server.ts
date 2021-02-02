@@ -2,6 +2,8 @@ import { serve, ServerRequest } from "https://deno.land/std@0.85.0/http/server.t
 import { serveFile } from "https://deno.land/std@0.85.0/http/file_server.ts";
 import * as entities from "https://deno.land/x/html_entities@v1.0/lib/xml-entities.js";
 
+import { SubProcess, SubprocessErrorData } from './subprocess.ts';
+
 let port = 5000;
 try {
   port = parseInt(Deno.env.get('PORT') || `${port}`);
@@ -45,49 +47,48 @@ for await (const req of serve({ port })) {
   }
 }
 
-async function generateSvg(modUrl: string, args: URLSearchParams) {
-  const proc = Deno.run({
-    cwd: 'dependencies-of',
-    cmd: ["./render.sh", modUrl, "svg", args.toString()],
-    env: {'NO_COLOR': 'yas'},
+async function computeGraph(modUrl: string, args: URLSearchParams) {
+  const downloadProc = new SubProcess('download', {
+    cmd: ["deno", "info", "--unstable", "--json", "--", modUrl],
     stdin: 'null',
-    stdout: 'piped',
-    stderr: 'piped',
+    errorPrefix: /^error: /,
   });
 
-  const [data, progress, status] = await Promise.all([
-    Deno.readAll(proc.stdout),
-    Deno.readAll(proc.stderr),
-    proc.status(),
-  ]);
-  Deno.writeAll(Deno.stderr, progress);
+  const computeProc = new SubProcess('compute', {
+    cmd: ["deno", "run", "--", "dependencies-of/compute.ts", args.toString()],
+    stdin: 'piped',
+    errorPrefix: /^(Uncaught|error:) /,
+  });
+  await downloadProc.pipeInto(computeProc);
 
-  if (status.code !== 0) {
-    throw new Error(`Graph rendering resulted in exit code ${status.code}`);
-  } else if (data.length < 2) {
-    const error = new TextDecoder().decode(progress).split('\n').find(x => x.startsWith('error: ')) || 'Is there really a module served at that URL?';
-    throw new Error(`Unable to build graph. ${error}`);
-  } else {
-    return data;
-  }
+  return computeProc;
 }
 
-function serveSvg(req: ServerRequest, modUrl: string, args: URLSearchParams) {
-  generateSvg(modUrl, args)
-    .then(data => ({
-      status: 200,
-      body: data,
-      headers: new Headers({
-        'content-type': 'image/svg+xml',
-      }),
+async function generateSvgStream(modUrl: string, args: URLSearchParams) {
+  args.set('format', 'dot');
+  const computeProc = await computeGraph(modUrl, args);
+
+  const dotProc = new SubProcess('render', {
+    cmd: ["dot", "-Tsvg"],
+    stdin: 'piped',
+    errorPrefix: /^Error: /,
+  });
+  await computeProc.pipeInto(dotProc);
+
+  return dotProc;
+}
+
+async function serveSvg(req: ServerRequest, modUrl: string, args: URLSearchParams) {
+  req.respond(await generateSvgStream(modUrl, args)
+    .then(proc => proc.toStreamingResponse({
+      'content-type': 'image/svg+xml',
     }), err => ({
       status: 500,
       body: `Internal Server Error: ${err.message}`,
       headers: new Headers({
         'content-type': 'text/plain',
       }),
-    }))
-    .then(resp => req.respond(resp));
+    })));
 }
 
 async function serveTemplatedHtml(req: ServerRequest, templatePath: string, replacements: Record<string,string> = {}) {
@@ -161,14 +162,30 @@ async function servePublic(req: ServerRequest, path: string, status = 200) {
 async function serveDependenciesOf(req: ServerRequest, modUrl: string, args: URLSearchParams) {
   args.set('font', 'Pragati Narrow');
 
-  const svgText = await generateSvg(modUrl, args).then(
-    raw => {
-      const fullSvg = new TextDecoder().decode(raw);
-      return fullSvg
-        .slice(fullSvg.indexOf('<!--'))
-        .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg id="graph"');
-    },
-    err => `<div id="graph-error">${err.message}</div>`);
+  const svgText = await generateSvgStream(modUrl, args)
+    .then(dotProc => dotProc.captureAllOutput())
+    .then(
+      raw => {
+        const fullSvg = new TextDecoder().decode(raw);
+        return fullSvg
+          .slice(fullSvg.indexOf('<!--'))
+          .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg id="graph"');
+      },
+      err => {
+        if (err.subproc) {
+          const info = err.subproc as SubprocessErrorData;
+          return `<div id="graph-error">
+          <h2>${entities.encode(info.procLabel.toUpperCase())} FAILED</h2>
+          <p>Process: <code>${entities.encode(info.cmdLine.join(' '))}</code></p>
+          <p>Exit code: <code>${info.exitCode}</code></p>
+          <p>${info.foundError
+            ? `<code>${entities.encode(info.foundError)}</code>`
+            : `<em>(no output received)</em>`}</p>
+          <h5>Sorry about that. Perhaps double check that the given URL is functional, or try another module URL.</h5>
+          </div>`;
+        }
+        return `<div id="graph-error">${entities.encode(err.message)}</div>`;
+      });
 
   await serveTemplatedHtml(req, 'dependencies-of/public.html', {
     graph_svg: svgText,
