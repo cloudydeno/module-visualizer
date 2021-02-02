@@ -39,12 +39,16 @@ input.url {
   width: auto;
   flex: 1;
 }
-#graph {
+svg#graph {
   grid-area: graph;
   max-height: 100%;
 }
 #graph text {
   fill: #111;
+}
+div#graph {
+  grid-area: graph;
+  overflow: hidden;
 }
 #graph-error {
   grid-area: graph;

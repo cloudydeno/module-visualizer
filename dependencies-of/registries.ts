@@ -110,8 +110,7 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
       return [parts.slice(3).join('/'), `from ${parts[2]}`];
     default:
       if (url.hostname.endsWith('.github.io')) {
-        const username = url.hostname.split('.')[0];
-        return [parts.slice(3).join('/'), `from github.com/${username}`];
+        return [parts.slice(3).join('/'), `from ${url.hostname}`];
       }
       return [module.base];
   }
@@ -124,17 +123,17 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
   if (url.protocol !== 'https:') return {};
   switch (url.host) {
     case 'deno.land':
-      if (url.pathname.startsWith('/std')) return { fillcolor: 'palegreen1', href: module.base };
-      return { fillcolor: 'darkslategray1', href: module.base };
+      if (url.pathname.startsWith('/std')) return { fillcolor: 'lightgreen', href: module.base };
+      return { fillcolor: 'lightskyblue', href: module.base };
     case 'cdn.esm.sh':
-      return { fillcolor: 'cornsilk', href: makeNpmHref(parts.slice(2).join('/')) };
+      return { fillcolor: 'blanchedalmond', href: makeNpmHref(parts.slice(2).join('/')) };
     case 'esm.sh':
-      return { fillcolor: 'cadetblue1', href: makeNpmHref(url.pathname.slice(1)) };
+      return { fillcolor: 'burlywood', href: makeNpmHref(url.pathname.slice(1)) };
     case 'cdn.dreg.dev':
       return { fillcolor: 'wheat', href: makeNpmHref(parts.slice(2).join('/')) };
     case 'raw.githubusercontent.com':
       const href = `https://github.com/${parts[1]}/${parts[2]}/tree/${parts[3]}`;
-      return { fillcolor: 'chocolate1', href };
+      return { fillcolor: 'chocolate', href };
     case 'cdn.skypack.dev':
       // TODO: urls have a random string after the version number
       return { fillcolor: 'darkturquoise' };
@@ -148,9 +147,9 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
       if (url.hostname.endsWith('.github.io')) {
         const username = url.hostname.split('.')[0];
         const href = `https://github.com/${username}/${parts[1]}`;
-        return { fillcolor: 'cornsilk3', href };
+        return { fillcolor: 'lightsalmon', href };
       }
-      return { fillcolor: 'cornsilk3' };
+      return { fillcolor: 'silver' };
   }
 }
 

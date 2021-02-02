@@ -26,7 +26,11 @@ for await (const req of http.serve({ port })) {
 
   if (url.pathname === '/') {
     serveTemplatedHtml(req, 'public/index.html');
-  } else if (['/global.css', '/icon-deps.png'].includes(url.pathname)) {
+  } else if ([
+    '/global.css',
+    '/icon-deps.png',
+    '/interactive-graph.js',
+  ].includes(url.pathname)) {
     servePublic(req, url.pathname);
   } else {
     req.respond({

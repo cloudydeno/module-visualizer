@@ -67,6 +67,9 @@ form#query {
       [<a href="{{ export_prefix }}dot">dot</a>]
     </h3>
   </hgroup>
+
+  <!-- https://tholman.com/github-corners/ -->
+  <a href="https://github.com/cloudydeno/module-visualizer/tree/main/dependencies-of" class="github-corner" aria-label="View source on GitHub">{{ github_corner }}</a>
 </header>
 
 <form id="query">
@@ -80,6 +83,7 @@ form#query {
       <option value="LR">Left to right</option>
       <option value="BT">Bottom-up</option>
       <option value="RL">Right to left</option>
+      <option value="interactive">Interactive</option>
     </select>
     <select name="std">
       <option value="combine">Treat /std as one module</option>
@@ -97,6 +101,9 @@ form#query {
     const args = new URLSearchParams(document.location.search);
     form.std.value = args.get('std') || 'combine';
     form.rankdir.value = args.get('rankdir') || 'TB';
+    if (args.get('renderer') === 'interactive') {
+      form.rankdir.value = 'interactive';
+    }
 
     form.addEventListener('submit', evt => {
       evt.preventDefault();
@@ -111,7 +118,9 @@ form#query {
       if (evt.target.std.value !== 'combine') {
         args.set('std', evt.target.std.value);
       }
-      if (evt.target.rankdir.value !== 'TB') {
+      if (evt.target.rankdir.value === 'interactive') {
+        args.set('renderer', 'interactive');
+      } else if (evt.target.rankdir.value !== 'TB') {
         args.set('rankdir', evt.target.rankdir.value);
       }
 
@@ -124,7 +133,4 @@ form#query {
   }
 </script>
 
-<!-- https://tholman.com/github-corners/ -->
-<a href="https://github.com/cloudydeno/module-visualizer/tree/main/dependencies-of" class="github-corner" aria-label="View source on GitHub">{{ github_corner }}</a>
-
-{{ graph_svg }}
+{{ graph_data }}
