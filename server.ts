@@ -17,20 +17,22 @@ for await (const req of serve({ port })) {
   const args = new URLSearchParams(url.search);
 
   {
-    const match = url.pathname.match(/^\/svg\/dependencies-of\/https\/(.+)$/);
-    if (match && req.method === 'GET') {
-      // TODO: check Origin is us
-      const url = 'https://'+decodeURI(match[1]);
-      serveSvg(req, url, args);
-      continue;
-    }
-  }
-
-  {
     const match = url.pathname.match(/^\/dependencies-of\/https\/(.+)$/);
     if (match && req.method === 'GET') {
       const url = 'https://'+decodeURI(match[1]);
-      serveDependenciesOf(req, url, args);
+      switch (args.get('format')) {
+        case 'json':
+          serveComputation(req, url, args, 'application/json');
+          break;
+        case 'dot':
+          serveComputation(req, url, args, 'text/plain; charset=utf-8');
+          break;
+        case 'svg':
+          serveSvg(req, url, args);
+          break;
+        default:
+          serveDependenciesOf(req, url, args);
+      }
       continue;
     }
   }
@@ -76,6 +78,19 @@ async function generateSvgStream(modUrl: string, args: URLSearchParams) {
   await computeProc.pipeInto(dotProc);
 
   return dotProc;
+}
+
+async function serveComputation(req: ServerRequest, modUrl: string, args: URLSearchParams, contentType: string) {
+  req.respond(await computeGraph(modUrl, args)
+    .then(proc => proc.toStreamingResponse({
+      'content-type': contentType,
+    }), err => ({
+      status: 500,
+      body: `Internal Server Error: ${err.message}`,
+      headers: new Headers({
+        'content-type': 'text/plain',
+      }),
+    })));
 }
 
 async function serveSvg(req: ServerRequest, modUrl: string, args: URLSearchParams) {
@@ -190,6 +205,6 @@ async function serveDependenciesOf(req: ServerRequest, modUrl: string, args: URL
   await serveTemplatedHtml(req, 'dependencies-of/public.html', {
     graph_svg: svgText,
     module_url: entities.encode(modUrl),
-    current_path: entities.encode(req.url),
+    export_prefix: entities.encode(`${req.url}${req.url.includes('?') ? '&' : '?'}format=`),
   });
 }

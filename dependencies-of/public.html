@@ -61,7 +61,11 @@ form#query {
   <hgroup>
     <h2>Showing&nbsp;<a href="{{ module_url }}" target="_blank">{{ module_url }}</a>
     </h2>
-    <h3>[<a href="/svg{{ current_path }}">svg</a>]</h3>
+    <h3>
+      [<a href="{{ export_prefix }}svg">svg</a>]
+      [<a href="{{ export_prefix }}json">json</a>]
+      [<a href="{{ export_prefix }}dot">dot</a>]
+    </h3>
   </hgroup>
 </header>
 

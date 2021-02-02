@@ -98,31 +98,65 @@ for (const [before, after] of jspmCollapses) {
   modules.delete(before.base);
 }
 
-console.log(`digraph "imported modules" {`);
-console.log(`  rankdir=${JSON.stringify(args.get('rankdir') || 'TB')};`);
-for (const module of modules.values()) {
-  // console.log(module.base, Array.from(module.deps.values()).map(x => x.base));
+// Allow output different levels of processing
+switch (args.get('format')) {
+  case 'json':
+    const data = {
+      modules: Object.create(null) as Record<string, {
+        moduleDeps: string[];
+        labelText: string[];
+        totalSize: number;
+        fileCount: number;
+        // files: CodeModule['files'];
+        nodeAttrs: Record<string,string>;
+      }>,
+    };
+    for (const module of modules.values()) {
+      data.modules[module.base] = {
+        moduleDeps: Array.from(module.deps).map(x => x.base),
+        labelText: registries.determineModuleLabel(module, isolateStd),
+        totalSize: module.totalSize,
+        fileCount: module.files.length,
+        // files: module.files,
+        nodeAttrs: registries.determineModuleAttrs(module),
+      };
+    }
+    console.log(JSON.stringify(data));
+    break;
 
-  const labels = registries.determineModuleLabel(module, isolateStd);
-  labels.push(`${module.files.length} files, ${filesize(module.totalSize, {round: 0})}`);
-  const nodeAttrs = {
-    shape: 'box',
-    label: labels.join('\n')+'\n',
-    penwidth: `${Math.log(Math.max(module.files.length/2, 1))+1}`,
-    fontname: args.get('font') || 'Arial',
-    style: 'filled',
-    tooltip: module.base,
-    ...registries.determineModuleAttrs(module),
-  };
-  // if (module.files.length >= 5) nodeAttrs.shape = 'box3d';
+  case 'dot':
+    console.log(`digraph "imported modules" {`);
+    console.log(`  rankdir=${JSON.stringify(args.get('rankdir') || 'TB')};`);
+    console.log();
+    for (const module of modules.values()) {
+      // console.log(module.base, Array.from(module.deps.values()).map(x => x.base));
 
-  const attrPairs = Object
-    .entries(nodeAttrs)
-    .map(x => `${x[0]}=${JSON.stringify(x[1]).replace(/\\n/g, '\\l')}`);
-  console.log(`  "${module.base}"[${attrPairs.join(',')}];`);
+      const labels = registries.determineModuleLabel(module, isolateStd);
+      labels.push(`${module.files.length} files, ${filesize(module.totalSize, {round: 0})}`);
+      const nodeAttrs = {
+        shape: 'box',
+        label: labels.join('\n')+'\n',
+        penwidth: `${Math.log(Math.max(module.files.length/2, 1))+1}`,
+        fontname: args.get('font') || 'Arial',
+        style: 'filled',
+        tooltip: module.base,
+        ...registries.determineModuleAttrs(module),
+      };
+      // if (module.files.length >= 5) nodeAttrs.shape = 'box3d';
 
-  for (const dep of module.deps.values()) {
-    console.log(`  "${module.base}" -> "${dep.base}";`);
-  }
+      const attrPairs = Object
+        .entries(nodeAttrs)
+        .map(x => `${x[0]}=${JSON.stringify(x[1]).replace(/\\n/g, '\\l')}`);
+      console.log(`  "${module.base}"[${attrPairs.join(',')}];`);
+
+      for (const dep of module.deps.values()) {
+        console.log(`  "${module.base}" -> "${dep.base}";`);
+      }
+      console.log();
+    }
+    console.log("}");
+    break;
+
+  default:
+    throw new Error(`Unexpected format ${JSON.stringify(args.get('format'))}`);
 }
-console.log("}");

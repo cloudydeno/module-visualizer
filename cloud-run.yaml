@@ -9,7 +9,7 @@ spec:
     spec:
       containerConcurrency: 20
       containers:
-      - image: gcr.io/stardust-156404/deno-module-visualizer:v1beta1
+      - image: gcr.io/stardust-156404/deno-module-visualizer:v1
         resources:
           limits:
             cpu: "1"
