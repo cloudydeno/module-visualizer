@@ -3,37 +3,40 @@
 {{ globals }}
 
 <header>
-  <h1>Deno Visualizer</h1>
+  <h1>Deno Module Visualizer</h1>
 </header>
 
 <section>
-<h2>Module Dependency Graph</h2>
-<p>
-  Understands the concept of packages & repositories to show a very simplified import graph.
-</p><p>
-  All files within one package get collapsed into a single box
-  and imports jumping between packages are emphasized.
-</p>
-<p>Here's a few interesting modules to start:</p>
-<ul>
-  <li><a href="/dependencies-of/https/deno.land/x/djwt@v2.1/mod.ts?rankdir=LR">deno.land/x/djwt@v2.1/mod.ts</a> (denopkg oriented)</li>
-  <li><a href="/dependencies-of/https/deno.land/x/webview@0.5.5/mod.ts?rankdir=LR">deno.land/x/webview@0.5.5/mod.ts</a> (quite clean)</li>
-  <li><a href="/dependencies-of/https/deno.land/x/puppeteer@5.5.1/mod.ts">deno.land/x/puppeteer@5.5.1/mod.ts</a> (jspm)</li>
-  <li><a href="/dependencies-of/https/deno.land/x/oak@v6.5.0/mod.ts">deno.land/x/oak@v6.5.0/mod.ts</a></li>
-  <li><a href="/dependencies-of/https/deno.land/x/drollup@2.38.1+0.7.4/mod.ts?std=combined">deno.land/x/drollup@2.38.1+0.7.4/mod.ts</a> with /std/ combined (default)</li>
-  <li><a href="/dependencies-of/https/deno.land/x/drollup@2.38.1+0.7.4/mod.ts?std=isolate">deno.land/x/drollup@2.38.1+0.7.4/mod.ts</a> with each /std/ subfolder broken out</li>
-  <li><a href="/dependencies-of/https/deno.land/x/aws_sdk@v3.4.1.1/client-cloudfront/mod.ts">deno.land/x/aws_sdk@v3.4.1.1/client-cloudfront/mod.ts</a></li>
-  <li><a href="/dependencies-of/https/deno.land/x/postgres@v0.7.0/mod.ts">deno.land/x/postgres@v0.7.0/mod.ts</a> (only uses std)</li>
-  <li><a href="/dependencies-of/https/deno.land/x/aleph@v0.2.28/cli.ts">deno.land/x/aleph@v0.2.28/cli.ts</a></li>
-  <li><a href="/dependencies-of/https/deno.land/x/aws_api@v0.2.1/demo.ts">deno.land/x/aws_api@v0.2.1/demo.ts</a></li>
-  <li><a href="/dependencies-of/https/deno.land/x/vno@v1.0.5/install/vno.ts">deno.land/x/vno@v1.0.5/install/vno.ts</a> (huge!)</li>
-  <li><a href="/dependencies-of/https/deno.land/x/superdeno@3.0.0/mod.ts">deno.land/x/superdeno@3.0.0/mod.ts</a> (big)</li>
-  <li><a href="/dependencies-of/https/deno.land/x/drash@v1.4.1/tests/members.ts">deno.land/x/drash@v1.4.1/tests/members.ts</a></li>
-  <li><a href="/dependencies-of/https/deno.land/x/mandarinets@v2.3.2/mod.ts?rankdir=LR">deno.land/x/mandarinets@v2.3.2/mod.ts</a></li>
-  <li><a href="/dependencies-of/https/raw.githubusercontent.com/stardustapp/standard-apps/master/publishing/blog-manager/routines/publish-blog.ts">raw.githubusercontent.com/stardustapp/standard-apps/master/publishing/blog-manager/routines/publish-blog.ts</a> (custom registries)</li>
-  <li><a href="/dependencies-of/https/raw.githubusercontent.com/danopia/kubernetes-dns-sync/main/controller/mod.ts?rankdir=LR">raw.githubusercontent.com/danopia/kubernetes-dns-sync/main/controller/mod.ts</a></li>
-  <!-- <li><a href="/dependencies-of/https/example">example</a></li> -->
-</ul>
+  <h2>
+    <img src="/icon-deps.png" alt="Diagram of connected modules" aria-hidden="true">
+    Dependency Graph
+  </h2>
+  <p>
+    Understands the concept of packages & repositories to show a very simplified import graph.
+  </p><p>
+    All files within one package get collapsed into a single box
+    and imports jumping between packages are emphasized.
+  </p>
+  <p>Here's a few interesting modules to start:</p>
+  <ul>
+    <li><a href="/dependencies-of/https/deno.land/x/djwt@v2.1/mod.ts?rankdir=LR">deno.land/x/djwt@v2.1/mod.ts</a> (denopkg oriented)</li>
+    <li><a href="/dependencies-of/https/deno.land/x/webview@0.5.5/mod.ts?rankdir=LR">deno.land/x/webview@0.5.5/mod.ts</a> (quite clean)</li>
+    <li><a href="/dependencies-of/https/deno.land/x/puppeteer@5.5.1/mod.ts">deno.land/x/puppeteer@5.5.1/mod.ts</a> (jspm)</li>
+    <li><a href="/dependencies-of/https/deno.land/x/oak@v6.5.0/mod.ts">deno.land/x/oak@v6.5.0/mod.ts</a></li>
+    <li><a href="/dependencies-of/https/deno.land/x/drollup@2.38.1+0.7.4/mod.ts?std=combined">deno.land/x/drollup@2.38.1+0.7.4/mod.ts</a> with /std/ combined (default)</li>
+    <li><a href="/dependencies-of/https/deno.land/x/drollup@2.38.1+0.7.4/mod.ts?std=isolate">deno.land/x/drollup@2.38.1+0.7.4/mod.ts</a> with each /std/ subfolder broken out</li>
+    <li><a href="/dependencies-of/https/deno.land/x/aws_sdk@v3.4.1.1/client-cloudfront/mod.ts">deno.land/x/aws_sdk@v3.4.1.1/client-cloudfront/mod.ts</a></li>
+    <li><a href="/dependencies-of/https/deno.land/x/postgres@v0.7.0/mod.ts">deno.land/x/postgres@v0.7.0/mod.ts</a> (only uses std)</li>
+    <li><a href="/dependencies-of/https/deno.land/x/aleph@v0.2.28/cli.ts">deno.land/x/aleph@v0.2.28/cli.ts</a></li>
+    <li><a href="/dependencies-of/https/deno.land/x/aws_api@v0.2.1/demo.ts">deno.land/x/aws_api@v0.2.1/demo.ts</a></li>
+    <li><a href="/dependencies-of/https/deno.land/x/vno@v1.0.5/install/vno.ts">deno.land/x/vno@v1.0.5/install/vno.ts</a> (huge!)</li>
+    <li><a href="/dependencies-of/https/deno.land/x/superdeno@3.0.0/mod.ts">deno.land/x/superdeno@3.0.0/mod.ts</a> (big)</li>
+    <li><a href="/dependencies-of/https/deno.land/x/drash@v1.4.1/tests/members.ts">deno.land/x/drash@v1.4.1/tests/members.ts</a></li>
+    <li><a href="/dependencies-of/https/deno.land/x/mandarinets@v2.3.2/mod.ts?rankdir=LR">deno.land/x/mandarinets@v2.3.2/mod.ts</a></li>
+    <li><a href="/dependencies-of/https/raw.githubusercontent.com/stardustapp/standard-apps/master/publishing/blog-manager/routines/publish-blog.ts">raw.githubusercontent.com/stardustapp/standard-apps/master/publishing/blog-manager/routines/publish-blog.ts</a> (custom registries)</li>
+    <li><a href="/dependencies-of/https/raw.githubusercontent.com/danopia/kubernetes-dns-sync/main/controller/mod.ts?rankdir=LR">raw.githubusercontent.com/danopia/kubernetes-dns-sync/main/controller/mod.ts</a></li>
+    <!-- <li><a href="/dependencies-of/https/example">example</a></li> -->
+  </ul>
 </section>
 
 <section>
@@ -50,9 +53,10 @@
     Other credits:
   </p>
   <ul>
-    <li>Tim Holman's <a target="_blank" href="https://tholman.com/github-corners/">Github Corners</a> snippit</li>
-    <li>Omnibus-Type's <a target="_blank" href="https://github.com/Omnibus-Type/ArchivoNarrow">Archivo Narrow</a> for fitting long strings into a visualization</li>
-    <li><a target="_blank" href="https://fonts.google.com/">Google Fonts</a> for webfont serving</li>
+    <li>Snippit: Tim Holman's <a target="_blank" href="https://tholman.com/github-corners/">Github Corner</a> HTML/SVG/CSS</li>
+    <li>Font: Omnibus-Type's <a target="_blank" href="https://github.com/Omnibus-Type/ArchivoNarrow">Archivo Narrow</a> for fitting long strings into a visualization</li>
+    <li>CDN: <a target="_blank" href="https://fonts.google.com/">Google Fonts</a> for webfont serving</li>
+    <li>Icon: Based on <a target="_blank" href="https://thenounproject.com/term/graph-databases/1631008/">Graph Databases</a> by H Alberto Gongora from the <em>Noun Project</em></li>
   </ul>
   <p>
     And you for being here!
