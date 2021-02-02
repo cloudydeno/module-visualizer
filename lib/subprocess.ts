@@ -1,6 +1,6 @@
 // Intended to be useful for piping together processes like in a Unix shell
 
-export class SubProcess<Tstdin extends 'piped' | 'null'> {
+export class SubProcess<Tstdin extends 'piped' | 'null' = 'piped' | 'null'> {
   constructor(
     public label: string,
     public opts: {
@@ -68,7 +68,7 @@ export class SubProcess<Tstdin extends 'piped' | 'null'> {
     return data;
   }
   async toStreamingResponse(headers: Record<string,string>) {
-    this.status();
+    this.status(); // throw this away because not really a way of reporting problems mid-stream
     return {
       status: 200,
       body: this.proc.stdout,
