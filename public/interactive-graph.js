@@ -16,7 +16,6 @@ window.CreateModuleGraph = function CreateModuleGraph(input) {
   for (const edge of data.edges) {
     seenNodes.delete(edge.to);
   }
-  console.log(seenNodes);
 
   const network = new vis.Network(container, data, {
     // layout: {
@@ -53,6 +52,12 @@ window.CreateModuleGraph = function CreateModuleGraph(input) {
         updateInterval: 25,
       },
     },
+  });
+
+  network.once('stabilized', () => {
+    network.fit({
+      maxZoomLevel: 4,
+    });
   });
 
   network.setSelection({
