@@ -5,6 +5,9 @@ import * as registries from "./module-registries.ts";
 
 export class ModuleMap {
   modules = new Map<string,CodeModule>();
+  mainModule: CodeModule | null = null;
+  mainFile: string | null = null;
+
   constructor(public args: URLSearchParams) {}
   isolateStd = this.args.get('std') === 'isolate';
 
@@ -22,6 +25,11 @@ export class ModuleMap {
       this.modules.set(base, module);
     }
     return module;
+  }
+
+  setMainUrl(url: string) {
+    this.mainModule = this.grabModFor(url);
+    this.mainFile = url;
   }
 
   addFile(url: string, info: DenoInfo['files']['file']) {
@@ -155,9 +163,10 @@ export class ModuleMap {
 
 }
 
-export function computeDependencies(data: DenoInfo, args: URLSearchParams) {
-  const map = new ModuleMap(args);
+export function processDenoInfo(data: DenoInfo, args?: URLSearchParams) {
+  const map = new ModuleMap(args ?? new URLSearchParams);
 
+  map.setMainUrl(data.module);
   for (const [url, info] of Object.entries(data.files)) {
     // console.log();
     map.addFile(url, info);
@@ -165,6 +174,12 @@ export function computeDependencies(data: DenoInfo, args: URLSearchParams) {
 
   map.fixupRedirects();
   map.fixupJSPM();
+
+  return map;
+}
+
+export function computeDependencies(data: DenoInfo, args: URLSearchParams) {
+  const map = processDenoInfo(data, args);
 
   // Allow output different levels of processing
   switch (args.get('format')) {
