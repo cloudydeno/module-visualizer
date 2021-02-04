@@ -3,141 +3,76 @@ import { filesize } from "../deps.ts";
 import { CodeModule, DenoInfo } from "./types.ts";
 import * as registries from "./registries.ts";
 
-const rawData = new TextDecoder().decode(await Deno.readAll(Deno.stdin));
-if (rawData[0] !== '{') throw new Error(`Expected JSON from "deno info --json"`);
-const data = JSON.parse(rawData) as DenoInfo;
+export class ModuleMap {
+  modules = new Map<string,CodeModule>();
+  constructor(public args: URLSearchParams) {}
+  isolateStd = this.args.get('std') === 'isolate';
 
-const args = new URLSearchParams(Deno.args[0]);
-const isolateStd = args.get('std') === 'isolate';
-
-const modules = new Map<string,CodeModule>();
-
-function grabModFor(url: string) {
-  const base = registries.determineModuleBase(url, isolateStd);
-  let module = modules.get(base);
-  if (!module) {
-    module = {
-      base,
-      totalSize: 0,
-      deps: new Set(),
-      depsUnversioned: new Set(),
-      files: new Array(),
-    };
-    modules.set(base, module);
+  grabModFor(url: string) {
+    const base = registries.determineModuleBase(url, this.isolateStd);
+    let module = this.modules.get(base);
+    if (!module) {
+      module = {
+        base,
+        totalSize: 0,
+        deps: new Set(),
+        depsUnversioned: new Set(),
+        files: new Array(),
+      };
+      this.modules.set(base, module);
+    }
+    return module;
   }
-  return module;
-}
 
-for await (const [url, info] of Object.entries(data.files)) {
-  // console.log();
-  const module = grabModFor(url);
-  module.totalSize += info.size;
-  module.files.push({
-    url: url,
-    deps: info.deps,
-    size: info.size,
-  });
-  for (const dep of info.deps) {
-    const depMod = grabModFor(dep);
-    if (module == depMod) continue;
-    module.deps.add(depMod);
-  }
-}
-
-// Fix deno.land redirections via guesswork
-// TODO: `deno cache` should give us this info so it's accurate
-for (const [key, module] of modules) {
-  if (module.files.length > 0) continue;
-  if (module.base.startsWith('https://deno.land') && !module.base.includes('@')) {
-    const candidates = Array.from(modules.values()).filter(x => x.base.startsWith(module.base+'@'));
-    const latestCandidate = candidates.slice(-1)[0]; // TODO? is this sorted?
-    if (latestCandidate) {
-      const users = Array.from(modules.values()).filter(x => x.deps.has(module));
-      for (const user of users) {
-        user.deps.delete(module);
-        user.deps.add(latestCandidate);
-        user.depsUnversioned.add(latestCandidate);
-      }
-      modules.delete(key);
-      continue;
+  addFile(url: string, info: DenoInfo['files']['file']) {
+    const module = this.grabModFor(url);
+    module.totalSize += info.size;
+    module.files.push({
+      url: url,
+      deps: info.deps,
+      size: info.size,
+    });
+    for (const dep of info.deps) {
+      const depMod = this.grabModFor(dep);
+      if (module == depMod) continue;
+      module.deps.add(depMod);
     }
   }
-  console.error('WARN: empty module', module.base);
-}
 
-// Collapse jspm weak version imports
-const jspmCollapses = new Map<CodeModule, CodeModule>();
-for (const [key, module] of modules) {
-  if (!key.startsWith('https://dev.jspm.io/') && !key.startsWith('https://jspm.dev/')) continue;
-  let prefix = (key+'.').replace(/latest\.$/, '');
-  if (!prefix.replace(/[:/]@/g, '').includes('@')) {
-    prefix = prefix.replace(/\.$/, '@');
-    console.error(prefix);
-  }
-  for (const dep of module.deps.values()) {
-    if (dep.base.startsWith(prefix)) {
-      jspmCollapses.set(module, dep);
-      break;
-    }
-  }
-}
-for (const [before, after] of jspmCollapses) {
-  // Add our deps to the new targets
-  for (const file of before.files) {
-    after.files.push(file);
-  }
-  after.totalSize += before.totalSize
-  // Remap all deps that were to the weak version
-  for (const module of modules.values()) {
-    if (module.deps.has(before)) {
-      module.deps.delete(before);
-      module.deps.add(after);
-    }
-  }
-  // Clean up weak version
-  modules.delete(before.base);
-}
-
-// Allow output different levels of processing
-switch (args.get('format')) {
-  case 'json':
-    const data = {
-      modules: Object.create(null) as Record<string, {
-        moduleDeps: string[];
-        labelText: string[];
-        totalSize: number;
-        fileCount: number;
-        // files: CodeModule['files'];
-        nodeAttrs: Record<string,string>;
-      }>,
-    };
-    for (const module of modules.values()) {
-      data.modules[module.base] = {
+  emitJSON() {
+    const modules: Record<string, {
+      moduleDeps: string[];
+      labelText: string[];
+      totalSize: number;
+      fileCount: number;
+      nodeAttrs: Record<string,string>;
+    }> = Object.create(null);
+    for (const module of this.modules.values()) {
+      modules[module.base] = {
         moduleDeps: Array.from(module.deps).map(x => x.base),
-        labelText: registries.determineModuleLabel(module, isolateStd),
+        labelText: registries.determineModuleLabel(module, this.isolateStd),
         totalSize: module.totalSize,
         fileCount: module.files.length,
-        // files: module.files,
         nodeAttrs: registries.determineModuleAttrs(module),
       };
     }
-    console.log(JSON.stringify(data));
-    break;
+    return { modules };
+  }
 
-  case 'dot':
-    console.log(`digraph "imported modules" {`);
-    console.log(`  rankdir=${JSON.stringify(args.get('rankdir') || 'TB')};`);
-    console.log();
-    for (const module of modules.values()) {
+  emitDOT(emitLine: (line: string) => void) {
+    emitLine(`digraph "imported modules" {`);
+    emitLine(`  rankdir=${JSON.stringify(this.args.get('rankdir') || 'TB')};`);
+    emitLine('');
+    for (const module of this.modules.values()) {
       // console.log(module.base, Array.from(module.deps.values()).map(x => x.base));
 
-      const labels = registries.determineModuleLabel(module, isolateStd);
+      const labels = registries.determineModuleLabel(module, this.isolateStd);
       labels.push(`${module.files.length} files, ${filesize(module.totalSize, {round: 0})}`);
       const nodeAttrs = {
         shape: 'box',
         label: labels.join('\n')+'\n',
         penwidth: `${Math.log(Math.max(module.files.length/2, 1))+1}`,
-        fontname: args.get('font') || 'Arial',
+        fontname: this.args.get('font') || 'Arial',
         style: 'filled',
         tooltip: module.base,
         ...registries.determineModuleAttrs(module),
@@ -147,16 +82,115 @@ switch (args.get('format')) {
       const attrPairs = Object
         .entries(nodeAttrs)
         .map(x => `${x[0]}=${JSON.stringify(x[1]).replace(/\\n/g, '\\l')}`);
-      console.log(`  "${module.base}"[${attrPairs.join(',')}];`);
+      emitLine(`  "${module.base}"[${attrPairs.join(',')}];`);
 
       for (const dep of module.deps.values()) {
-        console.log(`  "${module.base}" -> "${dep.base}";`);
+        emitLine(`  "${module.base}" -> "${dep.base}";`);
       }
-      console.log();
+      emitLine('');
     }
-    console.log("}");
-    break;
+    emitLine("}");
+  }
 
-  default:
-    throw new Error(`Unexpected format ${JSON.stringify(args.get('format'))}`);
+  // Fix deno.land redirections via guesswork
+  // TODO: `deno cache` should give us this info so it's accurate
+  // https://github.com/denoland/deno/issues/9351
+  fixupRedirects() {
+    const allModules = Array.from(this.modules.values());
+    for (const [key, module] of this.modules) {
+      if (module.files.length > 0) continue;
+      if (module.base.startsWith('https://deno.land') && !module.base.includes('@')) {
+        const candidates = allModules.filter(x => x.base.startsWith(module.base+'@'));
+        const latestCandidate = candidates.slice(-1)[0]; // TODO? is this sorted?
+        if (latestCandidate) {
+          const users = allModules.filter(x => x.deps.has(module));
+          for (const user of users) {
+            user.deps.delete(module);
+            user.deps.add(latestCandidate);
+            user.depsUnversioned.add(latestCandidate);
+          }
+          this.modules.delete(key);
+          continue;
+        }
+      }
+      console.error('WARN: empty module', module.base);
+    }
+  }
+
+  // Collapse jspm weak version imports into single nodes
+  // TODO: mark weak version edges in the graph
+  fixupJSPM() {
+    const jspmCollapses = new Map<CodeModule, CodeModule>();
+    for (const [key, module] of this.modules) {
+      if (!key.startsWith('https://dev.jspm.io/') && !key.startsWith('https://jspm.dev/')) continue;
+      let prefix = (key+'.').replace(/latest\.$/, '');
+      if (!prefix.replace(/[:/]@/g, '').includes('@')) {
+        prefix = prefix.replace(/\.$/, '@');
+        console.error(prefix);
+      }
+      for (const dep of module.deps.values()) {
+        if (dep.base.startsWith(prefix)) {
+          jspmCollapses.set(module, dep);
+          break;
+        }
+      }
+    }
+    for (const [before, after] of jspmCollapses) {
+      // Add our deps to the new targets
+      for (const file of before.files) {
+        after.files.push(file);
+      }
+      after.totalSize += before.totalSize
+      // Remap all deps that were to the weak version
+      for (const module of this.modules.values()) {
+        if (module.deps.has(before)) {
+          module.deps.delete(before);
+          module.deps.add(after);
+        }
+      }
+      // Clean up weak version
+      this.modules.delete(before.base);
+    }
+  }
+
+}
+
+export function computeDependencies(data: DenoInfo, args: URLSearchParams) {
+  const map = new ModuleMap(args);
+
+  for (const [url, info] of Object.entries(data.files)) {
+    // console.log();
+    map.addFile(url, info);
+  }
+
+  map.fixupRedirects();
+  map.fixupJSPM();
+
+  // Allow output different levels of processing
+  switch (args.get('format')) {
+    case 'json':
+      if (typeof args.get('pretty') === 'string') {
+        return JSON.stringify(map.emitJSON(), null, 2);
+      }
+      return JSON.stringify(map.emitJSON());
+
+    case 'dot':
+    case null:
+      const lines = new Array<string>();
+      map.emitDOT(line => lines.push(line));
+      return lines.join('\n')+'\n';
+
+    default:
+      throw new Error(`Unexpected format ${JSON.stringify(args.get('format'))}`);
+  }
+}
+
+if (import.meta.main) {
+  const rawData = new TextDecoder().decode(await Deno.readAll(Deno.stdin));
+  if (rawData[0] !== '{') throw new Error(`Expected JSON from "deno info --json"`);
+  const data = JSON.parse(rawData) as DenoInfo;
+
+  const args = new URLSearchParams(Deno.args[0]);
+
+  console.log(computeDependencies(data, args));
 }
