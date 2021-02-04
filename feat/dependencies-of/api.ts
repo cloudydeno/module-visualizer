@@ -1,9 +1,9 @@
-import { http, entities } from "../deps.ts";
-import { SubProcess, SubprocessErrorData } from '../lib/subprocess.ts';
-import { serveTemplatedHtml, makeErrorResponse } from '../lib/request-handling.ts';
+import { http, entities } from "../../deps.ts";
 
-import { DenoInfo } from "./types.ts";
-import { computeDependencies } from "./compute.ts";
+import { SubProcess, SubprocessErrorData } from '../../lib/subprocess.ts';
+import { serveTemplatedHtml, makeErrorResponse } from '../../lib/request-handling.ts';
+import { DenoInfo } from "../../lib/types.ts";
+import { computeDependencies } from "../../lib/module-map.ts";
 
 export function handleRequest(req: http.ServerRequest, modUrl: string, args: URLSearchParams) {
   switch (args.get('format')) {
@@ -119,7 +119,7 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, args:
     return `<div id="graph-error">${entities.encode(err.message)}</div>`;
   });
 
-  await serveTemplatedHtml(req, 'dependencies-of/public.html', {
+  await serveTemplatedHtml(req, 'feat/dependencies-of/public.html', {
     graph_data: graphData,
     module_url: entities.encode(modUrl),
     export_prefix: entities.encode(`${req.url}${req.url.includes('?') ? '&' : '?'}format=`),

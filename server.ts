@@ -1,6 +1,6 @@
 import { http } from "./deps.ts";
 
-import * as DependenciesOf from './dependencies-of/api.ts';
+import * as DependenciesOf from './feat/dependencies-of/api.ts';
 import { servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
 
 let port = 5000;

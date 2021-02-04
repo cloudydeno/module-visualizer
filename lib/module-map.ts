@@ -1,7 +1,7 @@
 import { filesize } from "../deps.ts";
 
 import { CodeModule, DenoInfo } from "./types.ts";
-import * as registries from "./registries.ts";
+import * as registries from "./module-registries.ts";
 
 export class ModuleMap {
   modules = new Map<string,CodeModule>();
