@@ -1,6 +1,8 @@
 import { http } from "./deps.ts";
 
 import * as DependenciesOf from './feat/dependencies-of/api.ts';
+import * as Shields from './feat/shields/api.ts';
+
 import { servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
 
 let port = 5000;
@@ -21,6 +23,13 @@ for await (const req of http.serve({ port })) {
       const modUrl = 'https://'+decodeURI(match[1]);
       DependenciesOf.handleRequest(req, modUrl, args);
       continue;
+    }
+  }
+
+  {
+    const match = url.pathname.match(/^\/shields\/([^\/]+)\/(.+)$/);
+    if (match && req.method === 'GET') {
+      if (Shields.handleRequest(req, match[1], match[2])) continue;
     }
   }
 
