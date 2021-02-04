@@ -1,36 +1,52 @@
 import { http, filesize, entities } from "../../deps.ts";
 
 import { SubProcess, SubprocessErrorData } from '../../lib/subprocess.ts';
-import { serveTemplatedHtml, makeErrorResponse } from '../../lib/request-handling.ts';
+import { serveTemplatedHtml } from '../../lib/request-handling.ts';
 import { DenoInfo, CodeModule } from "../../lib/types.ts";
+import { resolveModuleUrl } from "../../lib/resolve.ts";
 import { processDenoInfo, ModuleMap } from "../../lib/module-map.ts";
 import { determineModuleAttrs } from "../../lib/module-registries.ts";
 
-export function handleRequest(req: http.ServerRequest, shieldId: string, repoSlug: string) {
+export async function handleRequest(req: http.ServerRequest, shieldId: string, modSlug: string) {
+  const modUrl = await resolveModuleUrl(modSlug);
+  if (!modUrl) return false;
   switch (shieldId) {
+
     case 'dep-count':
-      computeGraph(repoSlug)
+      computeGraph(modUrl)
         .then(makeDepCountShield)
         .catch(makeErrorShield)
         .then(resp => req.respond(resp));
       return true;
+
     case 'updates':
-      computeGraph(repoSlug)
+      computeGraph(modUrl)
         .then(makeUpdatesShield)
         .catch(makeErrorShield)
         .then(resp => req.respond(resp));
       return true;
+
     case 'cache-size':
-      computeGraph(repoSlug)
+      computeGraph(modUrl)
         .then(makeCacheSizeShield)
         .catch(makeErrorShield)
         .then(resp => req.respond(resp));
       return true;
 
+    case 'latest-version':
+      if (modSlug.startsWith('x/')) {
+        makeXLatestVersionShield(modSlug.split('/')[1])
+          .catch(makeErrorShield)
+          .then(resp => req.respond(resp));
+        return true;
+      }
+      return false;
+
     case 'setup':
       serveTemplatedHtml(req, 'feat/shields/public.html', {
-        repo_slug: entities.encode(repoSlug),
-        repo_slug_component: encodeURIComponent(repoSlug),
+        module_slug: entities.encode(modSlug),
+        module_url: entities.encode(modUrl),
+        module_slug_component: encodeURIComponent(modSlug),
       });
       return true;
 
@@ -39,23 +55,7 @@ export function handleRequest(req: http.ServerRequest, shieldId: string, repoSlu
   }
 }
 
-async function resolveModuleUrl(modSlug: string) {
-  if (modSlug.startsWith('gh/')) {
-    const [_, owner, repo, ...path] = modSlug.split('/');
-    const data = await fetch(`https://api.github.com/repos/${owner}/${repo}`)
-    const {default_branch} = await data.json();
-    return `https://raw.githubusercontent.com/${owner}/${repo}/${default_branch ?? 'master'}/${path.join('/') || 'deps.ts'}`;
-
-  } else if (modSlug.startsWith('https/')) {
-    return `https://${modSlug.slice(6)}`;
-
-  } else {
-    throw new Error(`Unrecognized module source type from ${modSlug}`);
-  }
-}
-
-export async function computeGraph(modSlug: string) {
-  const modUrl = await resolveModuleUrl(modSlug);
+export async function computeGraph(modUrl: string) {
   const downloadData = await new SubProcess('download', {
     cmd: ["deno", "info", "--unstable", "--json", "--", modUrl],
     stdin: 'null',
@@ -241,6 +241,24 @@ function makeCacheSizeShield(map: ModuleMap): http.Response {
   };
 }
 
+async function makeXLatestVersionShield(modId: string): Promise<http.Response> {
+  const {latest, versions} = await fetch(`https://cdn.deno.land/${modId}/meta/versions.json`).then(x => x.json()) as {latest: string, versions: string[]};
+
+  return {
+    status: 200,
+    body: JSON.stringify({
+      schemaVersion: 1,
+      label: "deno.land/x",
+      namedLogo: 'deno',
+      message: latest,
+      color: "informational",
+      cacheSeconds: 1 * 60 * 60,
+    }),
+    headers: new Headers({
+      'content-type': 'application/json',
+    }),
+  };
+}
 
 function toObject<T>(iter: Iterable<[string,T]>): Record<string,T> {
   const out: Record<string,T> = Object.create(null);

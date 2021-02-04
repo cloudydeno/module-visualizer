@@ -18,18 +18,16 @@ for await (const req of http.serve({ port })) {
   const args = new URLSearchParams(url.search);
 
   {
-    const match = url.pathname.match(/^\/dependencies-of\/https\/(.+)$/);
+    const match = url.pathname.match(/^\/dependencies-of\/(.+)$/);
     if (match && req.method === 'GET') {
-      const modUrl = 'https://'+decodeURI(match[1]);
-      DependenciesOf.handleRequest(req, modUrl, args);
-      continue;
+      if (await DependenciesOf.handleRequest(req, match[1], args)) continue;
     }
   }
 
   {
     const match = url.pathname.match(/^\/shields\/([^\/]+)\/(.+)$/);
     if (match && req.method === 'GET') {
-      if (Shields.handleRequest(req, match[1], match[2])) continue;
+      if (await Shields.handleRequest(req, match[1], match[2])) continue;
     }
   }
 

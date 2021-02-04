@@ -1,5 +1,5 @@
 <!doctype html>
-<title>README Shields | {{ repo_slug }}</title>
+<title>README Shields | {{ module_slug }}</title>
 {{ globals }}
 
 <header>
@@ -8,7 +8,7 @@
     README Shields
   </h1>
   <hgroup>
-    <h2>Badges for {{ repo_slug }}</h2>
+    <h2>Badges for <a href="{{ module_url }}">{{ module_url }}</a></h2>
   </hgroup>
 
   <!-- https://tholman.com/github-corners/ -->
@@ -23,21 +23,27 @@
     </tr>
     <tr>
       <td>Dependency Count</td>
-      <td><img alt="Custom badge" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fdep-count%2F{{ repo_slug_component }}"></td>
-      <td><textarea>![Custom badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fdep-count%2F{{ repo_slug_component }})</textarea></td>
+      <td><img alt="Custom badge" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fdep-count%2F{{ module_slug_component }}"></td>
+      <td><textarea>![Custom badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fdep-count%2F{{ module_slug_component }})</textarea></td>
       <td>Just a number. Count of all packages, including deps-of-deps. Doesn't actually count individual files unlike 'deno info'.</td>
     </tr>
     <tr>
       <td>Dependency Updates</td>
-      <td><img alt="Custom badge" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fupdates%2F{{ repo_slug_component }}"></td>
-      <td><textarea>![Custom badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fupdates%2F{{ repo_slug_component }})</textarea></td>
+      <td><img alt="Custom badge" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fupdates%2F{{ module_slug_component }}"></td>
+      <td><textarea>![Custom badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fupdates%2F{{ module_slug_component }})</textarea></td>
       <td>Replicates https://david-dm.org/. Color coded by what % of immediate deps are at the latest version. I give a leniency for /std - any of the last 5 versions is fine. Also checks `npm audit` if you have any NPM packages in the import tree, and will be red if any important vulnerability is reported.</td>
     </tr>
     <tr>
       <td>Cached size</td>
-      <td><img alt="Custom badge" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fcache-size%2F{{ repo_slug_component }}"></td>
-      <td><textarea>![Custom badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fcache-size%2F{{ repo_slug_component }})</textarea></td>
+      <td><img alt="Custom badge" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fcache-size%2F{{ module_slug_component }}"></td>
+      <td><textarea>![Custom badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fcache-size%2F{{ module_slug_component }})</textarea></td>
       <td>Just a file size, showing the 'total' source source from 'deno info'.</td>
+    </tr>
+    <tr>
+      <td>Latest /x/ version</td>
+      <td><img alt="Custom badge" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Flatest-version%2F{{ module_slug_component }}"></td>
+      <td><textarea>![Custom badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Flatest-version%2F{{ module_slug_component }})</textarea></td>
+      <td>Only applicable to deno.land modules</td>
     </tr>
   </table>
 </header>

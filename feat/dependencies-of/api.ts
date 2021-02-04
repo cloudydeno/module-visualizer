@@ -3,21 +3,26 @@ import { http, entities } from "../../deps.ts";
 import { SubProcess, SubprocessErrorData } from '../../lib/subprocess.ts';
 import { serveTemplatedHtml, makeErrorResponse } from '../../lib/request-handling.ts';
 import { DenoInfo } from "../../lib/types.ts";
+import { resolveModuleUrl } from "../../lib/resolve.ts";
 import { computeDependencies } from "../../lib/module-map.ts";
 
-export function handleRequest(req: http.ServerRequest, modUrl: string, args: URLSearchParams) {
+export async function handleRequest(req: http.ServerRequest, modSlug: string, args: URLSearchParams) {
+  const modUrl = await resolveModuleUrl(modSlug);
+  if (!modUrl) return false;
+
   switch (args.get('format')) {
     case 'json':
       serveBufferedOutput(req, computeGraph(modUrl, args), 'application/json');
-      break;
+      return true;
     case 'dot':
       serveBufferedOutput(req, computeGraph(modUrl, args), 'text/plain; charset=utf-8');
-      break;
+      return true;
     case 'svg':
       serveStreamingOutput(req, generateSvgStream(modUrl, args), 'image/svg+xml');
-      break;
-    default:
-      serveHtmlGraphPage(req, modUrl, args);
+      return true;
+    case null:
+      serveHtmlGraphPage(req, modUrl, modSlug, args);
+      return true;
   }
 }
 
@@ -68,7 +73,7 @@ async function serveStreamingOutput(req: http.ServerRequest, computation: Promis
     }), makeErrorResponse));
 }
 
-async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, args: URLSearchParams) {
+async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSlug: string, args: URLSearchParams) {
   args.set('font', 'Archivo Narrow');
 
   const graphPromise = (args.get('renderer') === 'interactive')
@@ -121,6 +126,7 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, args:
 
   await serveTemplatedHtml(req, 'feat/dependencies-of/public.html', {
     graph_data: graphData,
+    module_slug: entities.encode(modSlug),
     module_url: entities.encode(modUrl),
     export_prefix: entities.encode(`${req.url}${req.url.includes('?') ? '&' : '?'}format=`),
   });
