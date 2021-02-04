@@ -18,6 +18,7 @@ export class SubProcess<Tstdin extends 'piped' | 'null' = 'piped' | 'null'> {
     ...this.opts,
     env: {...this.opts.env, 'NO_COLOR': 'yas'},
   });
+  #stdin: (Deno.Writer & Deno.Closer) | null = this.proc.stdin;
 
   #stderrText = Deno
     .readAll(this.proc.stderr)
@@ -52,14 +53,28 @@ export class SubProcess<Tstdin extends 'piped' | 'null' = 'piped' | 'null'> {
     return stderr;
   }
 
-  async pipeInto(next: SubProcess<'piped'>) {
-    const bytes = await Deno.copy(this.proc.stdout, next.proc.stdin);
-    next.proc.stdin.close();
+  async writeInputText(text: string) {
+    const stdin = this.#stdin;
+    if (!stdin) throw new Error(`This process isn't writable`);
+    this.#stdin = null;
+
+    const bytes = new TextEncoder().encode(text);
+    await Deno.writeAll(stdin, bytes);
+    stdin.close();
+  }
+  async pipeInputFrom(source: SubProcess) {
+    const stdin = this.#stdin;
+    if (!stdin) throw new Error(`This process isn't writable`);
+    this.#stdin = null;
+
+    const bytes = await Deno.copy(source.proc.stdout, stdin);
+    stdin.close();
     return {
       pipedBytes: bytes,
       stderr: await this.status(),
     };
   }
+
   async captureAllOutput() {
     const [data] = await Promise.all([
       Deno.readAll(this.proc.stdout),
@@ -67,6 +82,16 @@ export class SubProcess<Tstdin extends 'piped' | 'null' = 'piped' | 'null'> {
     ]);
     return data;
   }
+  async captureAllTextOutput() {
+    const output = await this.captureAllOutput();
+    return new TextDecoder().decode(output);
+  }
+  async captureAllJsonOutput() {
+    const output = await this.captureAllTextOutput();
+    if (output[0] !== '{') throw new Error(`Expected JSON from "${this.opts.cmd.join(' ')}"`);
+    return JSON.parse(output);
+  }
+
   async toStreamingResponse(headers: Record<string,string>) {
     this.status(); // throw this away because not really a way of reporting problems mid-stream
     return {

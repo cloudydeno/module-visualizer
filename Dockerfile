@@ -5,5 +5,5 @@ WORKDIR /src
 ADD deps.ts .
 RUN deno cache deps.ts
 ADD . .
-RUN deno cache server.ts dependencies-of/compute.ts
+RUN deno cache server.ts
 ENTRYPOINT ["deno","run","--allow-env","--allow-net=0.0.0.0","--allow-run","--allow-read=.","server.ts"]

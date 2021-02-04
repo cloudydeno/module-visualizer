@@ -1,15 +1,17 @@
 import { http, entities } from "../deps.ts";
-
 import { SubProcess, SubprocessErrorData } from '../lib/subprocess.ts';
 import { serveTemplatedHtml, makeErrorResponse } from '../lib/request-handling.ts';
+
+import { DenoInfo } from "./types.ts";
+import { computeDependencies } from "./compute.ts";
 
 export function handleRequest(req: http.ServerRequest, modUrl: string, args: URLSearchParams) {
   switch (args.get('format')) {
     case 'json':
-      serveStreamingOutput(req, computeGraph(modUrl, args), 'application/json');
+      serveBufferedOutput(req, computeGraph(modUrl, args), 'application/json');
       break;
     case 'dot':
-      serveStreamingOutput(req, computeGraph(modUrl, args), 'text/plain; charset=utf-8');
+      serveBufferedOutput(req, computeGraph(modUrl, args), 'text/plain; charset=utf-8');
       break;
     case 'svg':
       serveStreamingOutput(req, generateSvgStream(modUrl, args), 'image/svg+xml');
@@ -26,34 +28,37 @@ export async function computeGraph(
 ) {
   if (format) args.set('format', format);
 
-  const downloadProc = new SubProcess('download', {
+  const downloadData = JSON.parse(await new SubProcess('download', {
     cmd: ["deno", "info", "--unstable", "--json", "--", modUrl],
     stdin: 'null',
     errorPrefix: /^error: /,
-  });
+  }).captureAllTextOutput()) as DenoInfo;
 
-  // TODO: this should probably be in-process instead of being a child
-  const computeProc = new SubProcess('compute', {
-    cmd: ["deno", "run", "--allow-read=.", "--", "dependencies-of/compute.ts", args.toString()],
-    stdin: 'piped',
-    errorPrefix: /^(Uncaught|error:) /,
-  });
-  await downloadProc.pipeInto(computeProc);
-
-  return computeProc;
+  return computeDependencies(downloadData, args);
 }
 
 async function generateSvgStream(modUrl: string, args: URLSearchParams) {
-  const computeProc = await computeGraph(modUrl, args, 'dot');
+  const dotText = await computeGraph(modUrl, args, 'dot');
 
   const dotProc = new SubProcess('render', {
     cmd: ["dot", "-Tsvg"],
     stdin: 'piped',
     errorPrefix: /^Error: /,
   });
-  await computeProc.pipeInto(dotProc);
+  await dotProc.writeInputText(dotText);
 
   return dotProc;
+}
+
+async function serveBufferedOutput(req: http.ServerRequest, computation: Promise<string>, contentType: string) {
+  req.respond(await computation
+    .then(buffer => ({
+      status: 200,
+      body: buffer,
+      headers: new Headers({
+        'content-type': contentType,
+      }),
+    }), makeErrorResponse));
 }
 
 async function serveStreamingOutput(req: http.ServerRequest, computation: Promise<SubProcess>, contentType: string) {
@@ -69,9 +74,7 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, args:
   const graphPromise = (args.get('renderer') === 'interactive')
 
   ? computeGraph(modUrl, args, 'dot')
-      .then(x => x.captureAllOutput())
-      .then(raw => {
-        const data = new TextDecoder().decode(raw);
+      .then(data => {
         return `
           <div id="graph"></div>
           <script type="text/javascript" src="https://unpkg.com/vis-network@9.0.1/standalone/umd/vis-network.min.js"></script>
