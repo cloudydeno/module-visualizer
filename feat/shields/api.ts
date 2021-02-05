@@ -35,7 +35,7 @@ export async function handleRequest(req: http.ServerRequest, shieldId: string, m
 
     case 'latest-version':
       if (modSlug.startsWith('x/')) {
-        makeXLatestVersionShield(modSlug.split('/')[1])
+        makeXLatestVersionShield(modSlug.split('/')[1].split('@')[0])
           .catch(makeErrorShield)
           .then(resp => req.respond(resp));
         return true;
