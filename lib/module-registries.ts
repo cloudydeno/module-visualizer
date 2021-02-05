@@ -19,6 +19,8 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
     case 'cdn.dreg.dev':
       if (parts[3] !== 'package') return parts.slice(0,4).join('/');
       return parts.slice(0, 5 + (parts[4][0] === '@' ? 1 : 0)).join('/');
+    case 'github.com':
+      return `https://raw.githubusercontent.com/${parts[3]}/${parts[4]}/${parts[6]}`;
     case 'raw.githubusercontent.com':
       return parts.slice(0, 6).join('/');
     case 'denopkg.com':
