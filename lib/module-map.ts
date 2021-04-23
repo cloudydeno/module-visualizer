@@ -103,30 +103,6 @@ export class ModuleMap {
     emitLine("}");
   }
 
-  // Fix deno.land redirections via guesswork
-  // TODO: `deno cache` should give us this info so it's accurate
-  // https://github.com/denoland/deno/issues/9351
-  fixupRedirects() {
-    const allModules = Array.from(this.modules.values());
-    for (const [key, module] of this.modules) {
-      if (module.files.length > 0) continue;
-      if (module.base.startsWith('https://deno.land') && !module.base.includes('@')) {
-        const candidates = allModules.filter(x => x.base.startsWith(module.base+'@'));
-        const latestCandidate = candidates.slice(-1)[0]; // TODO? is this sorted?
-        if (latestCandidate) {
-          const users = allModules.filter(x => x.deps.has(module));
-          for (const user of users) {
-            user.deps.delete(module);
-            user.deps.add(latestCandidate);
-            user.depsUnversioned.add(latestCandidate);
-          }
-          this.modules.delete(key);
-          continue;
-        }
-      }
-      console.error('WARN: empty module', module.base);
-    }
-  }
 
   // Collapse jspm weak version imports into single nodes
   // TODO: mark weak version edges in the graph
@@ -175,7 +151,6 @@ export function processDenoInfo(data: DenoInfo, args?: URLSearchParams) {
     map.addFile(info.specifier, info);
   }
 
-  map.fixupRedirects();
   map.fixupJSPM();
 
   return map;
