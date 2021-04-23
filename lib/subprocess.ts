@@ -10,27 +10,30 @@ export class SubProcess<Tstdin extends 'piped' | 'null' = 'piped' | 'null'> {
       env?: Record<string,string>;
       stdin: Tstdin;
     },
-  ) {}
-
-  proc = Deno.run({
-    stdout: 'piped',
-    stderr: 'piped',
-    ...this.opts,
-    env: {...this.opts.env, 'NO_COLOR': 'yas'},
-  });
-  #stdin: (Deno.Writer & Deno.Closer) | null = this.proc.stdin;
-
-  #stderrText = Deno
-    .readAll(this.proc.stderr)
-    .then(raw => {
-      if (raw.length == 0) return [];
-      const lines = new TextDecoder().decode(raw).split('\n');
-      if (lines[lines.length - 1] == '') lines.pop();
-      for (const line of lines) {
-        console.log(`${this.label}: ${line}`);
-      }
-      return lines;
+  ) {
+    this.proc = Deno.run({
+      stdout: 'piped',
+      stderr: 'piped',
+      ...this.opts,
+      env: {...this.opts.env, 'NO_COLOR': 'yas'},
     });
+    this.#stdin = this.proc.stdin;
+    this.#stderrText = Deno
+      .readAll(this.proc.stderr)
+      .then(raw => {
+        if (raw.length == 0) return [];
+        const lines = new TextDecoder().decode(raw).split('\n');
+        if (lines[lines.length - 1] == '') lines.pop();
+        for (const line of lines) {
+          console.log(`${this.label}: ${line}`);
+        }
+        return lines;
+      });
+
+  }
+  proc: Deno.Process<{ cmd: string[]; stdin: Tstdin; stdout: "piped"; stderr: "piped"; }>;
+  #stdin: (Deno.Writer & Deno.Closer) | null;
+  #stderrText: Promise<string[]>;
 
   async status() {
     const [stderr, status] = await Promise.all([

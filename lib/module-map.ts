@@ -1,6 +1,6 @@
 import { filesize } from "../deps.ts";
 
-import { CodeModule, DenoInfo } from "./types.ts";
+import { CodeModule, DenoInfo, DenoModule } from "./types.ts";
 import * as registries from "./module-registries.ts";
 
 export class ModuleMap {
@@ -8,8 +8,10 @@ export class ModuleMap {
   mainModule: CodeModule | null = null;
   mainFile: string | null = null;
 
-  constructor(public args: URLSearchParams) {}
-  isolateStd = this.args.get('std') === 'isolate';
+  constructor(public args: URLSearchParams) {
+    this.isolateStd = this.args.get('std') === 'isolate';
+  }
+  isolateStd: boolean;
 
   grabModFor(url: string) {
     const base = registries.determineModuleBase(url, this.isolateStd);
@@ -32,16 +34,17 @@ export class ModuleMap {
     this.mainFile = url;
   }
 
-  addFile(url: string, info: DenoInfo['files']['file']) {
+  addFile(url: string, info: DenoModule) {
+    if (info.error != null) throw new Error(`TODO: module ${url} failed`);
     const module = this.grabModFor(url);
     module.totalSize += info.size;
     module.files.push({
       url: url,
-      deps: info.deps,
+      deps: info.dependencies.flatMap(x => [x.code ?? '', x.type ?? ''].filter(x => x)),
       size: info.size,
     });
-    for (const dep of info.deps) {
-      const depMod = this.grabModFor(dep);
+    for (const dep of info.dependencies) {
+      const depMod = this.grabModFor(dep.code || dep.type || '');
       if (module == depMod) continue;
       module.deps.add(depMod);
     }
@@ -166,10 +169,10 @@ export class ModuleMap {
 export function processDenoInfo(data: DenoInfo, args?: URLSearchParams) {
   const map = new ModuleMap(args ?? new URLSearchParams);
 
-  map.setMainUrl(data.module);
-  for (const [url, info] of Object.entries(data.files)) {
+  map.setMainUrl(data.root);
+  for (const info of data.modules) {
     // console.log();
-    map.addFile(url, info);
+    map.addFile(info.specifier, info);
   }
 
   map.fixupRedirects();

@@ -12,6 +12,7 @@ try {
   console.error(`WARN: failed to read $PORT due to ${err.name}`);
 }
 
+console.log('Setting up on', { port });
 for await (const req of http.serve({ port })) {
   console.log(req.method, req.url);
   const url = new URL(req.url, 'http://localhost');
