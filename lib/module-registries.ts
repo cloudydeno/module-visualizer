@@ -23,6 +23,8 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
       return `https://raw.githubusercontent.com/${parts[3]}/${parts[4]}/${parts[6]}`;
     case 'raw.githubusercontent.com':
       return parts.slice(0, 6).join('/');
+    case 'gist.githubusercontent.com':
+      return parts.slice(0, 7).join('/');
     case 'denopkg.com':
       const [repo, version] = parts[4].split('@');
       return `https://raw.githubusercontent.com/${parts[3]}/${repo}/${version||'master'}`;
@@ -95,6 +97,9 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
         return [parts[4], '  @ '+parts[5], `from github.com/${parts[3]}`];
       }
       return [parts.slice(4).join('@'), `from github.com/${parts[3]}`];
+    case 'gist.githubusercontent.com':
+      // https://gist.githubusercontent.com/danopia/d8b92fdbaa146133dac74a248e62d761/raw/bf5074703f24fee4c2f08577908115f2a6ffff6a/repro.ts
+      return [`gist: ${parts[3]}/${parts[4]}`, '  @ '+parts[6]];
     case 'cdn.skypack.dev':
       let modName = parts[4];
       if (modName.includes('@')) {
@@ -133,9 +138,14 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
       return { fillcolor: 'burlywood', href: makeNpmHref(url.pathname.slice(1)) };
     case 'cdn.dreg.dev':
       return { fillcolor: 'wheat', href: makeNpmHref(parts.slice(2).join('/')) };
-    case 'raw.githubusercontent.com':
+    case 'raw.githubusercontent.com': {
       const href = `https://github.com/${parts[1]}/${parts[2]}/tree/${parts[3]}`;
       return { fillcolor: 'chocolate', href };
+    }
+    case 'gist.githubusercontent.com': {
+      const href = `https://gist.github.com/${parts[1]}/${parts[2]}/${parts[4]}`;
+      return { fillcolor: 'violet', href };
+    }
     case 'cdn.skypack.dev':
       // TODO: urls have a random string after the version number
       return { fillcolor: 'darkturquoise' };
