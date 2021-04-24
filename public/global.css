@@ -89,3 +89,13 @@ section h2 img {
     animation: octocat-wave 560ms ease-in-out;
   }
 }
+
+
+@media (max-width: 800px) {
+  header h1 {
+    font-size: 1.5em;
+  }
+  header h2 {
+    font-size: 1em;
+  }
+}

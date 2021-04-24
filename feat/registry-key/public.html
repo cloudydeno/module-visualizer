@@ -1,0 +1,52 @@
+<!doctype html>
+<title>Module Registry Key | Deno Visualizer</title>
+{{ globals }}
+
+<style type="text/css">
+  #masonry {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1em;
+  }
+  #masonry div {
+    font-size: 1.3em;
+    border: 2px solid black;
+    padding: 0.5em;
+    flex-basis: 6em;
+    flex-grow: 1;
+    text-align: center;
+  }
+</style>
+
+<header>
+  <h1>
+    <a href="/">Deno Visualizer</a>:
+    Module Registry Key
+  </h1>
+  <hgroup>
+    <h2>All recognized registries &amp; their assigned color</h2>
+  </hgroup>
+
+  <!-- https://tholman.com/github-corners/ -->
+  <a href="https://github.com/cloudydeno/module-visualizer/tree/main/feat/registry-key" class="github-corner" aria-label="View source on GitHub">{{ github_corner }}</a>
+</header>
+
+<section id="masonry">
+{{ module_key }}
+</section>
+
+<section>
+  <p>
+    This key shows all registries that will be natively recognized.
+    ES Modules can easily import from any URL,
+    so it's quite possible to have unrecognized sources in a module graph.
+  </p><p>
+    Unknown sources usually show up fine, but sometimes the heuristics can go wrong!
+    Feel free to file a Github issue or PR when you see a registry in use that isn't on this list.
+    The gray box should be a giveaway.
+  </p><p>
+    Please note that the color assignments can be changed over time
+    to improve palette consistency.
+  </p>
+</section>

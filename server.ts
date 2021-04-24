@@ -1,13 +1,14 @@
 import { http } from "./deps.ts";
+import { servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
 
+// The different HTTP surfaces we expose
 import * as DependenciesOf from './feat/dependencies-of/api.ts';
 import * as Shields from './feat/shields/api.ts';
-
-import { servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
+import * as RegistryKey from './feat/registry-key/api.ts';
 
 let port = 5000;
 try {
-  port = parseInt(Deno.env.get('PORT') || `${port}`);
+  port = parseInt(Deno.env.get('PORT') || port.toString());
 } catch (err) {
   console.error(`WARN: failed to read $PORT due to ${err.name}`);
 }
@@ -29,6 +30,12 @@ for await (const req of http.serve({ port })) {
     const match = url.pathname.match(/^\/shields\/([^\/]+)\/(.+)$/);
     if (match && req.method === 'GET') {
       if (await Shields.handleRequest(req, match[1], match[2])) continue;
+    }
+  }
+
+  {
+    if (url.pathname === '/registry-key' && req.method === 'GET') {
+      if (await RegistryKey.handleRequest(req)) continue;
     }
   }
 

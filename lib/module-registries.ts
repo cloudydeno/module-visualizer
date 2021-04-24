@@ -123,45 +123,66 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
   }
 }
 
-// https://graphviz.org/doc/info/colors.html
+// CSS color names
+export const ModuleColors = {
+  "deno.land/std": "lightgreen",
+  "deno.land/x": "lightskyblue",
+  "cdn.esm.sh": "blanchedalmond",
+  "esm.sh": "burlywood",
+  "cdn.dreg.dev": "wheat",
+  "raw.githubusercontent.com": "chocolate",
+  "gist.githubusercontent.com": "violet",
+  "cdn.skypack.dev": "darkturquoise",
+  "dev.jspm.io": "palevioletred",
+  "jspm.dev": "palevioletred",
+  "cdn.pagic.org": "rosybrown",
+  "unpkg.com": "rosybrown",
+  "github.io": "lightsalmon",
+  "unknown": "silver",
+} as const;
+
 export function determineModuleAttrs(module: CodeModule): Record<string,string> {
   const url = new URL(module.base);
   const parts = url.pathname.split('/')
   if (url.protocol !== 'https:') return {};
   switch (url.host) {
     case 'deno.land':
-      if (url.pathname.startsWith('/std')) return { fillcolor: 'lightgreen', href: module.base };
-      return { fillcolor: 'lightskyblue', href: module.base };
+      if (url.pathname.startsWith('/std')) {
+        return { fillcolor: ModuleColors["deno.land/std"], href: module.base };
+      }
+      return { fillcolor: ModuleColors["deno.land/x"], href: module.base };
     case 'cdn.esm.sh':
-      return { fillcolor: 'blanchedalmond', href: makeNpmHref(parts.slice(2).join('/')) };
+      return { fillcolor: ModuleColors["cdn.esm.sh"], href: makeNpmHref(parts.slice(2).join('/')) };
     case 'esm.sh':
-      return { fillcolor: 'burlywood', href: makeNpmHref(url.pathname.slice(1)) };
+      return { fillcolor: ModuleColors["esm.sh"], href: makeNpmHref(url.pathname.slice(1)) };
     case 'cdn.dreg.dev':
-      return { fillcolor: 'wheat', href: makeNpmHref(parts.slice(2).join('/')) };
+      return { fillcolor: ModuleColors["cdn.dreg.dev"], href: makeNpmHref(parts.slice(2).join('/')) };
     case 'raw.githubusercontent.com': {
       const href = `https://github.com/${parts[1]}/${parts[2]}/tree/${parts[3]}`;
-      return { fillcolor: 'chocolate', href };
+      return { fillcolor: ModuleColors["raw.githubusercontent.com"], href };
     }
     case 'gist.githubusercontent.com': {
       const href = `https://gist.github.com/${parts[1]}/${parts[2]}/${parts[4]}`;
-      return { fillcolor: 'violet', href };
+      return { fillcolor: ModuleColors["gist.githubusercontent.com"], href };
     }
     case 'cdn.skypack.dev':
       // TODO: urls have a random string after the version number
-      return { fillcolor: 'darkturquoise' };
+      return { fillcolor: ModuleColors["cdn.skypack.dev"] };
     case 'dev.jspm.io':
+      return { fillcolor: ModuleColors["dev.jspm.io"], href: makeNpmHref(url.pathname.slice(5)) };
     case 'jspm.dev':
-      return { fillcolor: 'palevioletred', href: makeNpmHref(url.pathname.slice(5)) };
+      return { fillcolor: ModuleColors["jspm.dev"], href: makeNpmHref(url.pathname.slice(5)) };
     case 'cdn.pagic.org':
+      return { fillcolor: ModuleColors["cdn.pagic.org"], href: makeNpmHref(url.pathname.slice(1)) };
     case 'unpkg.com':
-      return { fillcolor: 'rosybrown', href: makeNpmHref(url.pathname.slice(1)) };
+      return { fillcolor: ModuleColors["unpkg.com"], href: makeNpmHref(url.pathname.slice(1)) };
     default:
       if (url.hostname.endsWith('.github.io')) {
         const username = url.hostname.split('.')[0];
         const href = `https://github.com/${username}/${parts[1]}`;
-        return { fillcolor: 'lightsalmon', href };
+        return { fillcolor: ModuleColors["github.io"], href };
       }
-      return { fillcolor: 'silver' };
+      return { fillcolor: ModuleColors["unknown"] };
   }
 }
 
