@@ -3,10 +3,33 @@ import { http, entities } from "../../deps.ts";
 import { SubProcess, SubprocessErrorData } from '../../lib/subprocess.ts';
 import { serveTemplatedHtml, makeErrorResponse } from '../../lib/request-handling.ts';
 import { DenoInfo } from "../../lib/types.ts";
-import { resolveModuleUrl } from "../../lib/resolve.ts";
+import { findModuleSlug, resolveModuleUrl } from "../../lib/resolve.ts";
 import { computeDependencies } from "../../lib/module-map.ts";
 
 export async function handleRequest(req: http.ServerRequest, modSlug: string, args: URLSearchParams) {
+  if (modSlug == '') {
+    const url = args.get('url');
+    if (!url) return false;
+    args.delete('url');
+
+    // clean up query parameters
+    if (args.get('std') == 'combine') args.delete('std');
+    if (args.get('rankdir') == 'TB') args.delete('rankdir');
+    if (args.get('rankdir') == 'interactive') {
+      args.set('renderer', 'interactive');
+      args.delete('rankdir');
+    }
+
+    const slug = await findModuleSlug(url);
+    req.respond({
+      status: 302,
+      headers: new Headers({
+        'location': slug + (args.toString() ? `?${args}` : ''),
+      }),
+    });
+    return true;
+  }
+
   const modUrl = await resolveModuleUrl(modSlug);
   if (!modUrl) return false;
 

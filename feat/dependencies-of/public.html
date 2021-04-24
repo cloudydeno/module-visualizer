@@ -67,7 +67,7 @@ form#query {
   <a href="https://github.com/cloudydeno/module-visualizer/tree/main/feat/dependencies-of" class="github-corner" aria-label="View source on GitHub">{{ github_corner }}</a>
 </header>
 
-<form id="query">
+<form id="query" action="/dependencies-of/" method="GET">
   <span style="grid-area: label">Module URL:</span>
   <input type="url" name="url" class="url" style="grid-area: url"
       required value="{{ module_url }}"
@@ -91,40 +91,9 @@ form#query {
 <script type="text/javascript">
   const form = document.querySelector('form#query');
   if (form) {
-    form.style.display = 'grid';
-
     const args = new URLSearchParams(document.location.search);
     form.std.value = args.get('std') || 'combine';
-    form.rankdir.value = args.get('rankdir') || 'TB';
-    if (args.get('renderer') === 'interactive') {
-      form.rankdir.value = 'interactive';
-    }
-
-    form.addEventListener('submit', evt => {
-      evt.preventDefault();
-
-      const url = new URL(evt.target.url.value);
-      if (url.protocol !== 'https:') {
-        return alert('Only https modules are accepted');
-      }
-      const modId = `https/${url.host}${url.pathname}`;
-
-      const args = new URLSearchParams;
-      if (evt.target.std.value !== 'combine') {
-        args.set('std', evt.target.std.value);
-      }
-      if (evt.target.rankdir.value === 'interactive') {
-        args.set('renderer', 'interactive');
-      } else if (evt.target.rankdir.value !== 'TB') {
-        args.set('rankdir', evt.target.rankdir.value);
-      }
-
-      const newUrl = new URL(window.location);
-      newUrl.pathname = `dependencies-of/${modId}`;
-      newUrl.search = args.toString();
-
-      window.location = newUrl.toString();
-    });
+    form.rankdir.value = args.get('renderer') || args.get('rankdir') || 'TB';
   }
 </script>
 

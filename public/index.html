@@ -21,7 +21,15 @@
     A full list of known registries can be found in
     <a href="/registry-key">the Registry Color Key</a>.
   </p>
-  <p>Here's a few interesting modules to start:</p>
+
+  <form id="dependencies-of" action="/dependencies-of/" method="GET"
+      style="display: flex; flex-direction: row;">
+    <input type="url" name="url" class="url" required style="flex: 1;"
+        placeholder="Module URL (e.g. https://deno.land/x/opine/mod.ts)" pattern="https://.+" />
+    <button type="submit">Visualize!</button>
+  </form>
+
+  <p>Just browsing? Here's a few interesting modules:</p>
   <ul>
     <li><a href="/dependencies-of/https/deno.land/x/djwt@v2.1/mod.ts?rankdir=LR">deno.land/x/djwt@v2.1/mod.ts</a> (denopkg oriented)</li>
     <li><a href="/dependencies-of/https/deno.land/x/webview@0.5.5/mod.ts?rankdir=LR">deno.land/x/webview@0.5.5/mod.ts</a> (quite clean)</li>

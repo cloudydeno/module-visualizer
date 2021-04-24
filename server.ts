@@ -20,7 +20,7 @@ for await (const req of http.serve({ port })) {
   const args = new URLSearchParams(url.search);
 
   {
-    const match = url.pathname.match(/^\/dependencies-of\/(.+)$/);
+    const match = url.pathname.match(/^\/dependencies-of\/(.*)$/);
     if (match && req.method === 'GET') {
       if (await DependenciesOf.handleRequest(req, match[1], args)) continue;
     }

@@ -27,12 +27,12 @@ hgroup > * {
 hgroup a:not(:hover) {
   text-decoration: none;
 }
-form {
+form#query {
   grid-area: form;
-  display: none;
+  display: grid;
   margin: 0 2em;
 }
-form span {
+form#query span {
   margin-right: 0.5em;
 }
 input.url {
