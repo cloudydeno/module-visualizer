@@ -32,16 +32,26 @@
   <a href="https://github.com/cloudydeno/module-visualizer/tree/main/feat/registry-key" class="github-corner" aria-label="View source on GitHub">{{ github_corner }}</a>
 </header>
 
-<section id="masonry">
-{{ module_key }}
-</section>
-
 <section>
   <p>
     This key shows all registries that will be natively recognized.
     ES Modules can easily import from any URL,
     so it's quite possible to have unrecognized sources in a module graph.
-  </p><p>
+  </p>
+</section>
+
+<section id="masonry">
+  {{ module_key }}
+</section>
+
+<section><p>Other colors:</p></section>
+
+<section id="masonry">
+  {{ extra_key }}
+</section>
+
+<section>
+  <p>
     Unknown sources usually show up fine, but sometimes the heuristics can go wrong!
     Feel free to file a Github issue or PR when you see a registry in use that isn't on this list.
     The gray box should be a giveaway.
