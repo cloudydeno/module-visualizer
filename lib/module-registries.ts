@@ -98,7 +98,6 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
       }
       return [parts.slice(4).join('@'), `from github.com/${parts[3]}`];
     case 'gist.githubusercontent.com':
-      // https://gist.githubusercontent.com/danopia/d8b92fdbaa146133dac74a248e62d761/raw/bf5074703f24fee4c2f08577908115f2a6ffff6a/repro.ts
       return [`gist: ${parts[3]}/${parts[4]}`, '  @ '+parts[6]];
     case 'cdn.skypack.dev':
       let modName = parts[4];
