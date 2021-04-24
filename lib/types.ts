@@ -1,14 +1,18 @@
 export interface CodeModule {
   base: string;
+  fragment: string;
   deps: Set<CodeModule>;
   depsUnversioned: Set<CodeModule>;
+  // TODO: depsTypes: Set<CodeModule>;
   totalSize: number;
+  errors?: string[];
   files: {
     url: string;
     deps: string[];
     size: number;
   }[];
 };
+
 
 export interface DenoInfo {
   root:    string;
@@ -45,15 +49,3 @@ export type DenoMediaType =
 | "JavaScript"
 | "Dts"
 ;
-
-  // compiled: string;
-  // depCount: number;
-  // fileType: string;
-  // local: string;
-  // map: unknown;
-  // module: string;
-  // totalSize: number;
-  // files: {[url: string]: {
-  //   deps: string[];
-  //   size: number;
-  // }};

@@ -13,29 +13,32 @@ export class ModuleMap {
   }
   isolateStd: boolean;
 
-  grabModFor(url: string) {
-    const base = registries.determineModuleBase(url, this.isolateStd);
-    let module = this.modules.get(base);
-    if (!module) {
-      module = {
+  grabModFor(url: string, fragment: string = '') {
+    const wireUrl = url.split('#')[0];
+    const base = registries.determineModuleBase(wireUrl, this.isolateStd);
+    let moduleInfo = this.modules.get(base + fragment);
+    if (!moduleInfo) {
+      moduleInfo = {
         base,
+        fragment,
         totalSize: 0,
         deps: new Set(),
         depsUnversioned: new Set(),
         files: new Array(),
       };
-      this.modules.set(base, module);
+      this.modules.set(base + fragment, moduleInfo);
     }
-    return module;
+    return moduleInfo;
   }
 
-  setMainUrl(url: string) {
-    this.mainModule = this.grabModFor(url);
-    this.mainFile = url;
-  }
+  addFile(url: string, info: DenoModule, data: DenoInfo) {
+    if (info.error != null) {
+      const module = this.grabModFor(url, '#error');
+      if (!module.errors) module.errors = [];
+      module.errors.push(info.error);
+      return;
+    }
 
-  addFile(url: string, info: DenoModule) {
-    if (info.error != null) throw new Error(`TODO: module ${url} failed`);
     const module = this.grabModFor(url);
     module.totalSize += info.size;
     module.files.push({
@@ -44,9 +47,20 @@ export class ModuleMap {
       size: info.size,
     });
     for (const dep of info.dependencies) {
-      const depMod = this.grabModFor(dep.code || dep.type || '');
-      if (module == depMod) continue;
-      module.deps.add(depMod);
+      if (dep.code) {
+        const depNode = data.modules.find(x => x.specifier === dep.code);
+        const depMod = this.grabModFor(dep.code, depNode?.error ? '#error' : undefined);
+        if (module !== depMod) {
+          module.deps.add(depMod);
+        }
+      }
+      if (dep.type) {
+        const depNode = data.modules.find(x => x.specifier === dep.type);
+        const depMod = this.grabModFor(dep.type, depNode?.error ? '#error' : undefined);
+        if (module !== depMod) {
+          module.deps.add(depMod);
+        }
+      }
     }
   }
 
@@ -56,14 +70,16 @@ export class ModuleMap {
       labelText: string[];
       totalSize: number;
       fileCount: number;
+      errors?: string[];
       nodeAttrs: Record<string,string>;
     }> = Object.create(null);
     for (const module of this.modules.values()) {
-      modules[module.base] = {
-        moduleDeps: Array.from(module.deps).map(x => x.base),
+      modules[module.base+module.fragment] = {
+        moduleDeps: Array.from(module.deps).map(x => x.base+x.fragment),
         labelText: registries.determineModuleLabel(module, this.isolateStd),
         totalSize: module.totalSize,
         fileCount: module.files.length,
+        errors: module.errors,
         nodeAttrs: registries.determineModuleAttrs(module),
       };
     }
@@ -78,7 +94,16 @@ export class ModuleMap {
       // console.log(module.base, Array.from(module.deps.values()).map(x => x.base));
 
       const labels = registries.determineModuleLabel(module, this.isolateStd);
-      labels.push(`${module.files.length} files, ${filesize(module.totalSize, {round: 0})}`);
+      if (module.errors) {
+        labels.unshift(`${module.errors.length} FAILED IMPORTS FROM:`);
+        for (const err of module.errors) {
+          labels.push('    • '+err.split('\n')[0].split(': ').slice(1).join(': '));
+        }
+        // throw new Error(`TODO: module ${url} failed: ${JSON.stringify(info.error)}`);
+      } else {
+        labels.push(`${module.files.length} files, ${filesize(module.totalSize, {round: 0})}`);
+      }
+
       const nodeAttrs = {
         shape: 'box',
         label: labels.join('\n')+'\n',
@@ -93,10 +118,10 @@ export class ModuleMap {
       const attrPairs = Object
         .entries(nodeAttrs)
         .map(x => `${x[0]}=${JSON.stringify(x[1]).replace(/\\n/g, '\\l')}`);
-      emitLine(`  "${module.base}"[${attrPairs.join(',')}];`);
+      emitLine(`  "${module.base}${module.fragment}"[${attrPairs.join(',')}];`);
 
       for (const dep of module.deps.values()) {
-        emitLine(`  "${module.base}" -> "${dep.base}";`);
+        emitLine(`  "${module.base}${module.fragment}" -> "${dep.base}${dep.fragment}";`);
       }
       emitLine('');
     }
@@ -145,10 +170,12 @@ export class ModuleMap {
 export function processDenoInfo(data: DenoInfo, args?: URLSearchParams) {
   const map = new ModuleMap(args ?? new URLSearchParams);
 
-  map.setMainUrl(data.root);
+  const rootNode = data.modules.find(x => x.specifier === data.root);
+  map.mainModule = map.grabModFor(data.root, rootNode?.error ? '#error' : undefined);
+  map.mainFile = data.root;
+
   for (const info of data.modules) {
-    // console.log();
-    map.addFile(info.specifier, info);
+    map.addFile(info.specifier, info, data);
   }
 
   map.fixupJSPM();

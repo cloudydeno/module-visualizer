@@ -124,6 +124,7 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
 }
 
 // CSS color names
+// e.g. https://www.rapidtables.com/web/css/css-color.html
 export const ModuleColors = {
   "deno.land/std": "lightgreen",
   "deno.land/x": "lightskyblue",
@@ -138,12 +139,17 @@ export const ModuleColors = {
   "cdn.pagic.org": "rosybrown",
   "unpkg.com": "rosybrown",
   "github.io": "lightsalmon",
+
+  "error": "salmon",
   "unknown": "silver",
 } as const;
 
 export function determineModuleAttrs(module: CodeModule): Record<string,string> {
+  if (module.fragment === '#error') {
+    return { fillcolor: ModuleColors["error"] };
+  }
   const url = new URL(module.base);
-  const parts = url.pathname.split('/')
+  const parts = url.pathname.split('/');
   if (url.protocol !== 'https:') return {};
   switch (url.host) {
     case 'deno.land':
