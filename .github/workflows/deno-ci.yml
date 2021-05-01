@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request: {}
+
+jobs:
+
+  check:
+    runs-on: ubuntu-latest
+    name: Check w/ ${{ matrix.deno-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        deno-version: ["v1.8", "v1.9", "canary"]
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v2
+
+    - name: Use Deno ${{ matrix.deno-version }}
+      uses: denoland/setup-deno@main
+      with:
+        deno-version: ${{ matrix.deno-version }}
+
+    # "file" cache: code from source control
+    # We're more selective here to prevent cross-branch contamination
+    - name: Cache file://
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cache/deno/gen/file
+        key: deno-file-v1-${{ github.ref }}-${{ hashFiles('**/deps.ts') }}
+        restore-keys: deno-file-v1-${{ github.ref }}-
+
+    # "https" cache: code from the Internet
+    # External sources won't change much so we use less precise keys
+    - name: Cache https://
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cache/deno/deps/https
+          ~/.cache/deno/gen/https
+        key: deno-https-v1-${{ hashFiles('**/deps.ts') }}
+        restore-keys: deno-https-v1-
+
+    - name: Check entrypoint
+      run: time deno cache server.ts
