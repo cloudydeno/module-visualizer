@@ -30,7 +30,8 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
       return `https://raw.githubusercontent.com/${parts[3]}/${repo}/${version||'master'}`;
     case 'cdn.skypack.dev':
       if (parts[3] !== '-') parts.splice(3, 0, '-');
-      return parts.slice(0, 5 + (parts[4][0] === '@' ? 1 : 0)).join('/');
+      return parts.slice(0, 5 + (parts[4][0] === '@' ? 1 : 0)).join('/')
+        .replace(/([^\/]+@[^\/]+)-[^-]+$/, '$1'); // remove hashsum after version
     case 'cdn.pika.dev':
       // skypack precursor, just redirects, so roll with it
       if (parts[3] !== '-') parts.splice(3, 0, '-');
@@ -102,11 +103,7 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
     case 'gist.githubusercontent.com':
       return [`gist: ${parts[3]}/${parts[4]}`, '  @ '+parts[6]];
     case 'cdn.skypack.dev':
-      let modName = parts[4];
-      if (modName.includes('@')) {
-        modName = modName.replace(/-[^@-]+$/, '');
-      }
-      return [modName, `from ${parts.slice(2,3).join('/')}`];
+      return [parts.slice(4).join('/'), `from ${parts.slice(2,3).join('/')}`];
     case 'dev.jspm.io':
     case 'jspm.dev':
       if (parts[3].startsWith('npm:')) {
@@ -184,7 +181,7 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
     }
     case 'cdn.skypack.dev':
       // TODO: urls have a random string after the version number
-      return { fillcolor: ModuleColors["cdn.skypack.dev"] };
+      return { fillcolor: ModuleColors["cdn.skypack.dev"], href: makeNpmHref(url.pathname.slice(3)) };
     case 'dev.jspm.io':
       return { fillcolor: ModuleColors["dev.jspm.io"], href: makeNpmHref(url.pathname.slice(5)) };
     case 'jspm.dev':
@@ -215,7 +212,7 @@ function makeNpmHref(packageId: string) {
     const parts = packageId.split('@');
     url = `https://www.npmjs.com/package/${parts[0]}`;
   }
-  const parts = packageId.slice(1).split('@');
+  const parts = packageId.slice(1).split(/@v?/);
   if (parts.length > 1) {
     url += `/v/${parts[1]}`;
   }
