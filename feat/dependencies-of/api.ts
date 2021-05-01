@@ -39,16 +39,16 @@ export async function handleRequest(req: http.ServerRequest, modSlug: string, ar
 
   switch (args.get('format')) {
     case 'json':
-      serveBufferedOutput(req, computeGraph(modUrl, args), 'application/json');
+      await serveBufferedOutput(req, computeGraph(modUrl, args), 'application/json');
       return true;
     case 'dot':
-      serveBufferedOutput(req, computeGraph(modUrl, args), 'text/plain; charset=utf-8');
+      await serveBufferedOutput(req, computeGraph(modUrl, args), 'text/plain; charset=utf-8');
       return true;
     case 'svg':
-      serveStreamingOutput(req, generateSvgStream(modUrl, args), 'image/svg+xml');
+      await serveStreamingOutput(req, generateSvgStream(modUrl, args), 'image/svg+xml');
       return true;
     case null:
-      serveHtmlGraphPage(req, modUrl, modSlug, args);
+      await serveHtmlGraphPage(req, modUrl, modSlug, args);
       return true;
   }
 }
@@ -170,12 +170,12 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSl
     body: readerFromIterable((async function*() {
       const encoder = new TextEncoder();
       yield encoder.encode(pageHtml);
-      yield encoder.encode("\n\n<!-- now waiting for graph ... -->\n");
 
+      yield encoder.encode("\n<!-- now waiting for graph ... ");
       const d0 = Date.now();
       const graphText = await graphPromise;
       const millis = Date.now() - d0;
-      yield encoder.encode(`<!-- ok, graph rendering completed in ${millis}ms -->\n\n`);
+      yield encoder.encode(`completed in ${millis}ms -->\n\n`);
 
       yield encoder.encode(graphText);
     }())),
