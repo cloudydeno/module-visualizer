@@ -21,7 +21,7 @@ export async function handleRequest(req: http.ServerRequest, modSlug: string, ar
     }
 
     const slug = await findModuleSlug(url);
-    req.respond({
+    await req.respond({
       status: 302,
       headers: new Headers({
         'location': slug + (args.toString() ? `?${args}` : ''),
@@ -79,7 +79,7 @@ async function generateSvgStream(modUrl: string, args: URLSearchParams) {
 }
 
 async function serveBufferedOutput(req: http.ServerRequest, computation: Promise<string>, contentType: string) {
-  req.respond(await computation
+  await req.respond(await computation
     .then(buffer => ({
       status: 200,
       body: buffer,
@@ -90,7 +90,7 @@ async function serveBufferedOutput(req: http.ServerRequest, computation: Promise
 }
 
 async function serveStreamingOutput(req: http.ServerRequest, computation: Promise<SubProcess>, contentType: string) {
-  req.respond(await computation
+  await req.respond(await computation
     .then(proc => proc.toStreamingResponse({
       'content-type': contentType,
     }), makeErrorResponse));

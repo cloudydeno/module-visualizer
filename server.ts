@@ -21,36 +21,36 @@ for await (const req of http.serve({ port })) {
   const url = new URL(req.url, 'http://localhost');
   const args = new URLSearchParams(url.search);
 
-  {
+  { // feature: dependencies-of
     const match = url.pathname.match(/^\/dependencies-of\/(.*)$/);
     if (match && req.method === 'GET') {
       if (await DependenciesOf.handleRequest(req, match[1], args)) continue;
     }
   }
 
-  {
+  { // feature: shields
     const match = url.pathname.match(/^\/shields\/([^\/]+)\/(.+)$/);
     if (match && req.method === 'GET') {
       if (await Shields.handleRequest(req, match[1], match[2])) continue;
     }
   }
 
-  {
+  { // feature: registry-key
     if (url.pathname === '/registry-key' && req.method === 'GET') {
       if (await RegistryKey.handleRequest(req)) continue;
     }
   }
 
   if (url.pathname === '/') {
-    serveTemplatedHtml(req, 'public/index.html');
+    await serveTemplatedHtml(req, 'public/index.html');
   } else if ([
     '/global.css',
     '/icon-deps.png',
     '/interactive-graph.js',
   ].includes(url.pathname)) {
-    servePublic(req, url.pathname);
+    await servePublic(req, url.pathname);
   } else {
-    req.respond({
+    await req.respond({
       status: 404,
       body: '404 Not Found',
     });
