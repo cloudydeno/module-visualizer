@@ -1,3 +1,5 @@
+#!/usr/bin/env -S deno run --allow-read=. --allow-net=0.0.0.0 --allow-run=deno,dot --allow-env=PORT
+
 import { http } from "./deps.ts";
 import { servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
 
