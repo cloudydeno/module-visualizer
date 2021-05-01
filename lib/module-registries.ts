@@ -1,4 +1,4 @@
-import { CodeModule } from "./types.ts";
+import type { CodeModule } from "./types.ts";
 
 export function determineModuleBase(fullUrl: string, isolateStd: boolean): string {
   const url = new URL(fullUrl);

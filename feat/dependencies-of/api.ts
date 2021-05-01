@@ -1,6 +1,5 @@
-import { http, entities } from "../../deps.ts";
+import { http, entities, SubProcess, SubprocessErrorData } from "../../deps.ts";
 
-import { SubProcess, SubprocessErrorData } from '../../lib/subprocess.ts';
 import { serveTemplatedHtml, makeErrorResponse } from '../../lib/request-handling.ts';
 import { DenoInfo } from "../../lib/types.ts";
 import { findModuleSlug, resolveModuleUrl } from "../../lib/resolve.ts";

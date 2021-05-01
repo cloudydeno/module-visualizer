@@ -1,8 +1,7 @@
-import { http, filesize, entities } from "../../deps.ts";
+import { http, filesize, SubProcess, entities } from "../../deps.ts";
 
-import { SubProcess, SubprocessErrorData } from '../../lib/subprocess.ts';
 import { serveTemplatedHtml } from '../../lib/request-handling.ts';
-import { DenoInfo, CodeModule } from "../../lib/types.ts";
+import { CodeModule } from "../../lib/types.ts";
 import { resolveModuleUrl } from "../../lib/resolve.ts";
 import { processDenoInfo, ModuleMap } from "../../lib/module-map.ts";
 import { determineModuleAttrs } from "../../lib/module-registries.ts";
