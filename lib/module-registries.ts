@@ -46,6 +46,8 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
     case 'cdn.pagic.org':
     case 'unpkg.com':
       return parts.slice(0, 4 + (parts[3][0] == '@' ? 1 : 0)).join('/');
+    case 'aws-api.deno.dev':
+      return parts.slice(0, 5).join('/');
     default:
       if (url.hostname.endsWith('.github.io')) {
         return parts.slice(0, 4).join('/');
@@ -114,6 +116,15 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
     case 'cdn.pagic.org':
     case 'unpkg.com':
       return [parts.slice(3).join('/'), `from ${parts[2]}`];
+    case 'aws-api.deno.dev': {
+      const services = Array.from(new Set(module.files.map(x => x.url.split('/')[5]?.split('.')[0])));
+      const namedServices = services.filter(x => x.length < 8).slice(0, 3);
+      if (namedServices.length < 1) namedServices.push(services[0]);
+      const unnamedCount = services.length - namedServices.length;
+      const svcList = '    ' + namedServices.join(', ') + (unnamedCount ? ` + ${unnamedCount} others` : '');
+      const modName = module.base.slice(url.protocol.length).replace(/\/services$/, '');
+      return [ modName, svcList ];
+    }
     default:
       if (url.hostname.endsWith('.github.io')) {
         return [parts.slice(3).join('/'), `from ${url.hostname}`];
@@ -138,6 +149,7 @@ export const ModuleColors = {
   "cdn.pagic.org": "rosybrown",
   "unpkg.com": "rosybrown",
   "github.io": "lightsalmon",
+  "aws-api.deno.dev": "darkorange",
 
   "error": "salmon",
   "unknown": "silver",
@@ -181,6 +193,8 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
       return { fillcolor: ModuleColors["cdn.pagic.org"], href: makeNpmHref(url.pathname.slice(1)) };
     case 'unpkg.com':
       return { fillcolor: ModuleColors["unpkg.com"], href: makeNpmHref(url.pathname.slice(1)) };
+    case 'aws-api.deno.dev':
+      return { fillcolor: ModuleColors["aws-api.deno.dev"], href: module.base };
     default:
       if (url.hostname.endsWith('.github.io')) {
         const username = url.hostname.split('.')[0];
