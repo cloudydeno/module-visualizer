@@ -62,6 +62,7 @@ export async function computeGraph(
 
   const downloadData = JSON.parse(await new SubProcess('download', {
     cmd: ["deno", "info", "--unstable", "--json", "--", modUrl],
+    env: { "NO_COLOR": "yas" },
     stdin: 'null',
     errorPrefix: /^error: /,
   }).captureAllTextOutput()) as DenoInfo;
@@ -99,6 +100,8 @@ async function serveStreamingOutput(req: http.ServerRequest, computation: Promis
       'content-type': contentType,
     }), makeErrorResponse));
 }
+
+const hideLoadMsg = `<style type="text/css">#graph-waiting { display: none; }</style>`;
 
 async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSlug: string, args: URLSearchParams) {
   args.set('font', 'Archivo Narrow');
@@ -164,7 +167,7 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSl
     return `<div id="graph-error">${entities.encode(err.stack)}</div>`;
   });
 
-  // Return the body in two parts
+  // Return the body in two parts, with a comment in between
   await req.respond({
     headers: HtmlHeaders,
     body: readerFromIterable((async function*() {
@@ -173,7 +176,7 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSl
 
       yield encoder.encode("\n<!-- now waiting for graph ... ");
       const d0 = Date.now();
-      const graphText = await graphPromise;
+      const graphText = hideLoadMsg + await graphPromise;
       const millis = Date.now() - d0;
       yield encoder.encode(`completed in ${millis}ms -->\n\n`);
 
