@@ -1,5 +1,12 @@
 import { http, file_server } from "../deps.ts";
 
+export const HtmlHeaders = new Headers({
+  'content-type': 'text/html; charset=utf-8',
+});
+export const TextHeaders = new Headers({
+  'content-type': 'text/text; charset=utf-8',
+});
+
 export async function templateHtml(templatePath: string, replacements: Record<string,string> = {}) {
   const [
     template,
@@ -26,9 +33,7 @@ export async function templateHtml(templatePath: string, replacements: Record<st
 export async function serveTemplatedHtml(req: http.ServerRequest, templatePath: string, replacements: Record<string,string> = {}) {
   await templateHtml(templatePath, replacements)
     .then(body => ({ body,
-      headers: new Headers({
-        'content-type': 'text/html; charset=utf-8',
-      }),
+      headers: HtmlHeaders,
     }))
     .catch(makeErrorResponse)
     .then(resp => req.respond(resp));
@@ -43,22 +48,18 @@ export async function servePublic(req: http.ServerRequest, path: string, status 
 }
 
 export function makeErrorResponse(err: Error): http.Response {
-  const headers = new Headers({
-    'content-type': 'text/plain; charset=utf-8',
-  });
-
   if (err.name === 'NotFound') {
     return {
       status: 404,
       body: '404 Not Found',
-      headers,
+      headers: TextHeaders,
     };
   } else {
     console.log(err.stack);
     return {
       status: 500,
       body: 'Internal Server Error:\n' + err.message,
-      headers,
+      headers: TextHeaders,
     };
   }
 }

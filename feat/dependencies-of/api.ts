@@ -1,6 +1,11 @@
-import { http, entities, SubProcess, SubprocessErrorData } from "../../deps.ts";
+import {
+  http,
+  entities,
+  readerFromIterable,
+  SubProcess, SubprocessErrorData,
+} from "../../deps.ts";
 
-import { serveTemplatedHtml, makeErrorResponse } from '../../lib/request-handling.ts';
+import { templateHtml, makeErrorResponse, HtmlHeaders } from '../../lib/request-handling.ts';
 import { DenoInfo } from "../../lib/types.ts";
 import { findModuleSlug, resolveModuleUrl } from "../../lib/resolve.ts";
 import { computeDependencies } from "../../lib/module-map.ts";
@@ -98,7 +103,20 @@ async function serveStreamingOutput(req: http.ServerRequest, computation: Promis
 async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSlug: string, args: URLSearchParams) {
   args.set('font', 'Archivo Narrow');
 
-  const graphPromise = (args.get('renderer') === 'interactive')
+  // Render the basic page first, so we can error more cleanly if that fails
+  let pageHtml = '';
+  try {
+    pageHtml = await templateHtml('feat/dependencies-of/public.html', {
+      module_slug: entities.encode(modSlug),
+      module_url: entities.encode(modUrl),
+      export_prefix: entities.encode(`${req.url}${req.url.includes('?') ? '&' : '?'}format=`),
+    });
+  } catch (err) {
+    await req.respond(makeErrorResponse(err));
+    return;
+  }
+
+  const graphPromise = ((args.get('renderer') === 'interactive')
 
   ? computeGraph(modUrl, args, 'dot')
       .then(data => {
@@ -127,9 +145,9 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSl
         return fullSvg
           .slice(fullSvg.indexOf('<!--'))
           .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg id="graph"');
-      });
+      })
 
-  const graphData = await graphPromise.catch(err => {
+  ).catch(err => {
     if (err.subproc) {
       const info = err.subproc as SubprocessErrorData;
       return `
@@ -143,13 +161,23 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSl
         <h5>Sorry about that. Perhaps double check that the given URL is functional, or try another module URL.</h5>
         </div>`.replace(/^ +/gm, '');
     }
-    return `<div id="graph-error">${entities.encode(err.message)}</div>`;
+    return `<div id="graph-error">${entities.encode(err.stack)}</div>`;
   });
 
-  await serveTemplatedHtml(req, 'feat/dependencies-of/public.html', {
-    graph_data: graphData,
-    module_slug: entities.encode(modSlug),
-    module_url: entities.encode(modUrl),
-    export_prefix: entities.encode(`${req.url}${req.url.includes('?') ? '&' : '?'}format=`),
-  });
+  // Return the body in two parts
+  await req.respond({
+    headers: HtmlHeaders,
+    body: readerFromIterable((async function*() {
+      const encoder = new TextEncoder();
+      yield encoder.encode(pageHtml);
+      yield encoder.encode("\n\n<!-- now waiting for graph ... -->\n");
+
+      const d0 = Date.now();
+      const graphText = await graphPromise;
+      const millis = Date.now() - d0;
+      yield encoder.encode(`<!-- ok, graph rendering completed in ${millis}ms -->\n\n`);
+
+      yield encoder.encode(graphText);
+    }())),
+  })
 }
