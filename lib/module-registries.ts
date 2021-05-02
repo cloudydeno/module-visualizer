@@ -3,6 +3,7 @@ import type { CodeModule } from "./types.ts";
 export function determineModuleBase(fullUrl: string, isolateStd: boolean): string {
   const url = new URL(fullUrl);
   const parts = fullUrl.split('/');
+  if (url.protocol === 'file:') return 'file://';
   if (url.protocol !== 'https:') return fullUrl;
   switch (url.host) {
     case 'deno.land':
