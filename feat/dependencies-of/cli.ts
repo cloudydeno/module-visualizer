@@ -5,7 +5,7 @@ const flags = Flags.parse(Deno.args, {
   },
 });
 if (flags._.length !== 1) {
-  console.error(`usage: cli.ts <path/to/module.ts> [-o output.{png,svg}]`);
+  console.error(`usage: cli.ts <path/to/module.ts> [-o output.{png,svg,jpg,jpeg}]`);
   Deno.exit(4);
 }
 
@@ -15,8 +15,8 @@ const modUrl = `${flags._[0]}`;
 if (flags.output) {
 
   const ext = flags.output.split('.').slice(-1)[0];
-  if (!['png', 'svg'].includes(ext)) {
-    console.error(`use .png or .svg for the output file`);
+  if (!['png', 'svg', 'jpg', 'jpeg'].includes(ext)) {
+    console.error(`use .png or .svg or .jpg or .jpeg for the output file`);
     Deno.exit(5);
   }
 
