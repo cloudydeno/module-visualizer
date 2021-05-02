@@ -11,6 +11,8 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
     case 'cdn.deno.land':
       if (parts[3] === 'std' && isolateStd) return parts.slice(0, 8).join('/');
       return parts.slice(0, 6).join('/');
+    case 'crux.land':
+      return `${url.origin}/${parts[5].split('.')[0]}`;
     case 'esm.sh':
       return parts.slice(0, 4 + (parts[3][0] === '@' ? 1 : 0)).join('/');
     case 'cdn.esm.sh':
@@ -87,6 +89,8 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
       if (parts[3] !== 'std') modName = `/x${modName}`;
       return [[modName, ...parts.slice(7)].join('/'), `from ${parts[2]}`, ...extra];
     }
+    case 'crux.land':
+      return [module.base.split('//')[1]];
     case 'esm.sh':
       return [parts.slice(3).join('/'), `from ${parts[2]}`];
     case 'cdn.esm.sh':
@@ -135,6 +139,7 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
 export const ModuleColors = {
   "deno.land/std": "lightgreen",
   "deno.land/x": "lightskyblue",
+  "crux.land": "greenyellow",
   "cdn.esm.sh": "blanchedalmond",
   "esm.sh": "burlywood",
   "cdn.dreg.dev": "wheat",
@@ -165,12 +170,8 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
         return { fillcolor: ModuleColors["deno.land/std"], href: module.base };
       }
       return { fillcolor: ModuleColors["deno.land/x"], href: module.base };
-    case 'cdn.esm.sh':
-      return { fillcolor: ModuleColors["cdn.esm.sh"], href: makeNpmHref(parts.slice(2).join('/')) };
-    case 'esm.sh':
-      return { fillcolor: ModuleColors["esm.sh"], href: makeNpmHref(url.pathname.slice(1)) };
-    case 'cdn.dreg.dev':
-      return { fillcolor: ModuleColors["cdn.dreg.dev"], href: makeNpmHref(parts.slice(2).join('/')) };
+    case 'crux.land':
+      return { fillcolor: ModuleColors["crux.land"], href: module.base };
     case 'raw.githubusercontent.com': {
       const href = `https://github.com/${parts[1]}/${parts[2]}/tree/${parts[3]}`;
       return { fillcolor: ModuleColors["raw.githubusercontent.com"], href };
@@ -179,6 +180,12 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
       const href = `https://gist.github.com/${parts[1]}/${parts[2]}/${parts[4]}`;
       return { fillcolor: ModuleColors["gist.githubusercontent.com"], href };
     }
+    case 'cdn.esm.sh':
+      return { fillcolor: ModuleColors["cdn.esm.sh"], href: makeNpmHref(parts.slice(2).join('/')) };
+    case 'esm.sh':
+      return { fillcolor: ModuleColors["esm.sh"], href: makeNpmHref(url.pathname.slice(1)) };
+    case 'cdn.dreg.dev':
+      return { fillcolor: ModuleColors["cdn.dreg.dev"], href: makeNpmHref(parts.slice(2).join('/')) };
     case 'cdn.skypack.dev':
       // TODO: urls have a random string after the version number
       return { fillcolor: ModuleColors["cdn.skypack.dev"], href: makeNpmHref(url.pathname.slice(3)) };
