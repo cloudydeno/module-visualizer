@@ -165,6 +165,7 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
   const parts = url.pathname.split('/');
   if (url.protocol !== 'https:') return {};
   switch (url.host) {
+    // Deno natives - direct href
     case 'deno.land':
       if (url.pathname.startsWith('/std')) {
         return { fillcolor: ModuleColors["deno.land/std"], href: module.base };
@@ -172,6 +173,9 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
       return { fillcolor: ModuleColors["deno.land/x"], href: module.base };
     case 'crux.land':
       return { fillcolor: ModuleColors["crux.land"], href: module.base };
+    case 'aws-api.deno.dev':
+      return { fillcolor: ModuleColors["aws-api.deno.dev"], href: module.base };
+    // Github direct links
     case 'raw.githubusercontent.com': {
       const href = `https://github.com/${parts[1]}/${parts[2]}/tree/${parts[3]}`;
       return { fillcolor: ModuleColors["raw.githubusercontent.com"], href };
@@ -180,6 +184,7 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
       const href = `https://gist.github.com/${parts[1]}/${parts[2]}/${parts[4]}`;
       return { fillcolor: ModuleColors["gist.githubusercontent.com"], href };
     }
+    // NPM proxies, cdns, repackagers
     case 'cdn.esm.sh':
       return { fillcolor: ModuleColors["cdn.esm.sh"], href: makeNpmHref(parts.slice(2).join('/')) };
     case 'esm.sh':
@@ -197,8 +202,6 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
       return { fillcolor: ModuleColors["cdn.pagic.org"], href: makeNpmHref(url.pathname.slice(1)) };
     case 'unpkg.com':
       return { fillcolor: ModuleColors["unpkg.com"], href: makeNpmHref(url.pathname.slice(1)) };
-    case 'aws-api.deno.dev':
-      return { fillcolor: ModuleColors["aws-api.deno.dev"], href: module.base };
     default:
       if (url.hostname.endsWith('.github.io')) {
         const username = url.hostname.split('.')[0];
