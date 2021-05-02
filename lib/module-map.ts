@@ -1,4 +1,4 @@
-import { filesize } from "../deps.ts";
+import { filesize } from "https://crux.land/6wZ5Sz#filesize@v1";
 
 import { CodeModule, DenoInfo, DenoModule } from "./types.ts";
 import * as registries from "./module-registries.ts";

@@ -2,13 +2,14 @@ import {
   http,
   entities,
   readerFromIterable,
-  SubProcess, SubprocessErrorData,
 } from "../../deps.ts";
 
 import { templateHtml, makeErrorResponse, HtmlHeaders } from '../../lib/request-handling.ts';
-import { DenoInfo } from "../../lib/types.ts";
 import { findModuleSlug, resolveModuleUrl } from "../../lib/resolve.ts";
-import { computeDependencies } from "../../lib/module-map.ts";
+import {
+  computeGraph, renderGraph,
+  SubProcess, SubprocessErrorData,
+} from "./compute.ts";
 
 export async function handleRequest(req: http.ServerRequest, modSlug: string, args: URLSearchParams) {
   if (modSlug == '') {
@@ -45,42 +46,12 @@ export async function handleRequest(req: http.ServerRequest, modSlug: string, ar
       await serveBufferedOutput(req, computeGraph(modUrl, args), 'text/plain; charset=utf-8');
       return true;
     case 'svg':
-      await serveStreamingOutput(req, generateSvgStream(modUrl, args), 'image/svg+xml');
+      await serveStreamingOutput(req, renderGraph(modUrl, ["-Tsvg"], args), 'image/svg+xml');
       return true;
     case null:
       await serveHtmlGraphPage(req, modUrl, modSlug, args);
       return true;
   }
-}
-
-export async function computeGraph(
-  modUrl: string,
-  args: URLSearchParams,
-  format?: string,
-) {
-  if (format) args.set('format', format);
-
-  const downloadData = JSON.parse(await new SubProcess('download', {
-    cmd: ["deno", "info", "--unstable", "--json", "--", modUrl],
-    env: { "NO_COLOR": "yas" },
-    stdin: 'null',
-    errorPrefix: /^error: /,
-  }).captureAllTextOutput()) as DenoInfo;
-
-  return computeDependencies(downloadData, args);
-}
-
-async function generateSvgStream(modUrl: string, args: URLSearchParams) {
-  const dotText = await computeGraph(modUrl, args, 'dot');
-
-  const dotProc = new SubProcess('render', {
-    cmd: ["dot", "-Tsvg"],
-    stdin: 'piped',
-    errorPrefix: /^Error: /,
-  });
-  await dotProc.writeInputText(dotText);
-
-  return dotProc;
 }
 
 async function serveBufferedOutput(req: http.ServerRequest, computation: Promise<string>, contentType: string) {
@@ -141,7 +112,7 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSl
           `.replace(/^ {10}/gm, '');
       })
 
-  : generateSvgStream(modUrl, args)
+  : renderGraph(modUrl, ["-Tsvg"], args)
       .then(dotProc => dotProc.captureAllOutput())
       .then(raw => {
         const fullSvg = new TextDecoder().decode(raw);

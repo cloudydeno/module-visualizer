@@ -3,8 +3,3 @@ export * as file_server from "https://deno.land/std@0.95.0/http/file_server.ts";
 export { readerFromIterable } from "https://deno.land/std@0.95.0/io/streams.ts";
 
 export * as entities from "https://deno.land/x/html_entities@v1.0/lib/xml-entities.js";
-
-// from https://github.com/cloudydeno/deno-bitesized :
-export { filesize } from "https://crux.land/6wZ5Sz#filesize@v1";
-export { SubProcess } from "https://crux.land/454pqj#sub-process@v2";
-export type { SubprocessErrorData } from "https://crux.land/454pqj#sub-process@v2";
