@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [ main ]
+    tags: [ v* ]
   pull_request: {}
 
 jobs:
@@ -44,3 +45,87 @@ jobs:
 
     - name: Check entrypoint
       run: time deno cache server.ts
+
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  push:
+    needs: check
+    runs-on: ubuntu-latest
+    name: 'Push container image'
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Log into GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+      - name: Log into Google Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Pull latest image for cache
+        run: docker pull ghcr.io/${{ github.repository }}
+
+      - name: Build image
+        run: |
+          docker build . \
+            --cache-from ghcr.io/${{ github.repository }} \
+            --file Dockerfile \
+            --tag built-image
+
+      - name: Inspect image
+        run: docker images built-image
+
+      - name: Push image to GitHub Container Registry
+        id: push_ghcr
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository }}
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          [ "$VERSION" == "main" ] && VERSION=latest
+
+          docker tag built-image $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+
+          echo "Pushed $IMAGE_ID:$VERSION"
+          echo "::set-output name=docker_image::$IMAGE_ID:$VERSION"
+
+      - name: Push image to Google Container Registry
+        id: push_gcr
+        run: |
+          IMAGE_ID=gcr.io/stardust-156404/deno-module-visualizer
+          VERSION=${{ github.sha }}
+
+          docker tag built-image $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+
+          echo "Pushed $IMAGE_ID:$VERSION"
+          echo "::set-output name=docker_image::$IMAGE_ID:$VERSION"
+
+    outputs:
+      ghcr_image: ${{ steps.push_ghcr.outputs.docker_image }}
+      gcr_image: ${{ steps.push_gcr.outputs.docker_image }}
+
+  deploy:
+    needs: push
+    runs-on: ubuntu-latest
+    name: 'Deploy to live site'
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@main
+        with:
+          project_id: stardust-156404
+          credentials: ${{ secrets.GCP_SA_KEY }}
+          service: deno-module-visualizer
+          region: us-central1
+          image: ${{ needs.push.outputs.gcr_image }}
