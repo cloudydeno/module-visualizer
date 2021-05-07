@@ -47,6 +47,13 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
       const path = parts.slice(0, 4 + (parts[3].includes(':@') ? 1 : 0)).join('/');
       return path.split(/[?!]/)[0];
     }
+    case 'cdn.jsdelivr.net':
+      switch (parts[3]) {
+        case 'gh':
+          return parts.slice(0, 6).join('/');
+        case 'npm':
+          return parts.slice(0, 5 + (parts[4][0] == '@' ? 1 : 0)).join('/');
+      }; break;
     case 'cdn.pagic.org':
     case 'unpkg.com':
       return parts.slice(0, 4 + (parts[3][0] == '@' ? 1 : 0)).join('/');
@@ -59,12 +66,12 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
       if (url.hostname.endsWith('.arweave.net')) {
         return parts.slice(0, 4).join('/');
       }
-      if (url.pathname.includes('@')) {
-        const verIdx = parts.findIndex(x => x.includes('@'))
-        return parts.slice(0, verIdx+1).join('/');
-      }
-      return fullUrl;
   }
+  if (url.pathname.includes('@')) {
+    const verIdx = parts.findIndex(x => x.includes('@'))
+    return parts.slice(0, verIdx+1).join('/');
+  }
+  return fullUrl;
 }
 
 export function determineModuleLabel(module: CodeModule, isolateStd: boolean): string[] {
@@ -115,6 +122,17 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
         parts[3] = parts[3].slice(4);
       }
       return [parts.slice(3).join('/'), `from ${parts[2]}`];
+    case 'cdn.jsdelivr.net':
+      switch (parts[3]) {
+        case 'gh':
+          const [repo, ver] = parts[5].split('@');
+          if (ver.length >= 20) {
+            return [repo, '  @ '+ver, `from github.com/${parts[4]}`];
+          }
+          return [parts[5], `from github.com/${parts[4]}`];
+        case 'npm':
+          return [parts.slice(4).join('/'), `from ${parts.slice(2,4).join('/')}`];
+      }; break;
     case 'cdn.pagic.org':
     case 'unpkg.com':
       return [parts.slice(3).join('/'), `from ${parts[2]}`];
@@ -131,12 +149,13 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
       if (url.hostname.endsWith('.github.io')) {
         return [parts.slice(3).join('/'), `from ${url.hostname}`];
       }
-      return [module.base];
   }
+  return [module.base];
 }
 
 // CSS color names
 // e.g. https://www.rapidtables.com/web/css/css-color.html
+// gold is still available and looks pretty great, fwiw
 export const ModuleColors = {
   "deno.land/std": "lightgreen",
   "deno.land/x": "lightskyblue",
@@ -150,6 +169,7 @@ export const ModuleColors = {
   "dev.jspm.io": "palevioletred",
   "jspm.dev": "palevioletred",
   "cdn.pagic.org": "rosybrown",
+  "cdn.jsdelivr.net": "yellowgreen",
   "unpkg.com": "rosybrown",
   "github.io": "lightsalmon",
   "aws-api.deno.dev": "darkorange",
@@ -199,6 +219,18 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
       return { fillcolor: ModuleColors["dev.jspm.io"], href: makeNpmHref(url.pathname.slice(5)) };
     case 'jspm.dev':
       return { fillcolor: ModuleColors["jspm.dev"], href: makeNpmHref(url.pathname.slice(5)) };
+    case 'cdn.jsdelivr.net':
+      switch (parts[1]) {
+        case 'gh':
+          const [repo, ver] = parts[3].split('@');
+          return { fillcolor: ModuleColors["cdn.jsdelivr.net"],
+            href: `https://github.com/${parts[2]}/${repo}${ver ? `/tree/${ver}` : ''}`,
+          };
+        case 'npm':
+          return { fillcolor: ModuleColors["cdn.jsdelivr.net"],
+            href: makeNpmHref(url.pathname.slice(5)),
+          };
+      }; break;
     case 'cdn.pagic.org':
       return { fillcolor: ModuleColors["cdn.pagic.org"], href: makeNpmHref(url.pathname.slice(1)) };
     case 'unpkg.com':
@@ -209,8 +241,8 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
         const href = `https://github.com/${username}/${parts[1]}`;
         return { fillcolor: ModuleColors["github.io"], href };
       }
-      return { fillcolor: ModuleColors["unknown"] };
   }
+  return { fillcolor: ModuleColors["unknown"] };
 }
 
 function makeNpmHref(packageId: string) {
