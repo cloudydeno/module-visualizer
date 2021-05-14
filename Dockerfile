@@ -1,4 +1,4 @@
-FROM hayd/alpine-deno:1.9.2
+FROM hayd/alpine-deno:1.10.1
 RUN apk add --no-cache graphviz
 ADD fonts/ /usr/share/fonts/truetype/
 

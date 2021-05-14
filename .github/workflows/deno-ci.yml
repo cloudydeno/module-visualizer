@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     name: Check w/ ${{ matrix.deno-version }}
     strategy:
-      fail-fast: false
       matrix:
-        deno-version: ["v1.8", "v1.9", "canary"]
+        deno-version: ["v1.9", "v1.10", "canary"]
+      fail-fast: false # run each branch to completion
 
     steps:
     - name: Checkout source
