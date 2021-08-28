@@ -15,7 +15,6 @@ jobs:
       matrix:
         deno-version:
         - v1.9
-        - v1.12
         - v1.13
         - canary
       fail-fast: false # run each branch to completion
