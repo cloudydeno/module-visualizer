@@ -39,14 +39,19 @@ export class ModuleMap {
       return;
     }
 
+    const depEdges = [ ...info.dependencies ];
+    if (info.typeDependency) {
+      depEdges.push(info.typeDependency);
+    }
+
     const module = this.grabModFor(url);
     module.totalSize += info.size;
     module.files.push({
       url: url,
-      deps: info.dependencies.flatMap(x => [x.code ?? '', x.type ?? ''].filter(x => x)),
+      deps: depEdges.flatMap(x => [x.code ?? '', x.type ?? ''].filter(x => x)),
       size: info.size,
     });
-    for (const dep of info.dependencies) {
+    for (const dep of depEdges) {
       if (dep.code) {
         const depNode = data.modules.find(x => x.specifier === dep.code);
         const depMod = this.grabModFor(dep.code, depNode?.error ? '#error' : undefined);

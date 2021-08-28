@@ -21,8 +21,6 @@ export interface DenoInfo {
 }
 
 interface DenoModuleInfo {
-  specifier:    string;
-  dependencies: DenoDependency[];
   size:         number;
   mediaType:    DenoMediaType;
   local:        string;
@@ -31,11 +29,16 @@ interface DenoModuleInfo {
   error:        undefined;
 }
 interface DenoModuleError {
-  specifier:    string;
-  dependencies: DenoDependency[];
   error:        string;
 }
-export type DenoModule = DenoModuleInfo | DenoModuleError;
+export type DenoModule = {
+  specifier:       string;
+  dependencies:    DenoDependency[];
+  typeDependency?: DenoDependency;
+} & (
+  | DenoModuleInfo
+  | DenoModuleError
+);
 
 export interface DenoDependency {
   specifier: string;
