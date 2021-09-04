@@ -45,6 +45,12 @@ export async function servePublic(req: http.ServerRequest, path: string) {
     .catch(makeErrorResponse)
     .then(resp => req.respond(resp));
 }
+export async function serveFont(req: http.ServerRequest, path: string) {
+  await file_server
+    .serveFile(req, 'fonts/'+path)
+    .catch(makeErrorResponse)
+    .then(resp => req.respond(resp));
+}
 
 export function makeErrorResponse(err: Error): http.Response {
   if (err.name === 'NotFound') {

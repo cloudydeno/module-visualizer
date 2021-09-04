@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run --allow-read=. --allow-net=0.0.0.0 --allow-run=deno,dot --allow-env=PORT
 
 import { http } from "./deps.ts";
-import { servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
+import { serveFont, servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
 
 // The different HTTP surfaces we expose
 import * as DependenciesOf from './feat/dependencies-of/api.ts';
@@ -56,6 +56,12 @@ async function handleReq(req: http.ServerRequest) {
     '/interactive-graph.js',
   ].includes(url.pathname)) {
     await servePublic(req, url.pathname);
+    return;
+  }
+
+  if (url.pathname.startsWith('/fonts/') &&
+      url.pathname.endsWith('.woff2')) {
+    await serveFont(req, url.pathname.slice(6));
     return;
   }
 
