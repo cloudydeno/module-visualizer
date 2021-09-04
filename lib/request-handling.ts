@@ -39,10 +39,22 @@ export async function serveTemplatedHtml(req: http.ServerRequest, templatePath: 
     .then(resp => req.respond(resp));
 }
 
-export async function servePublic(req: http.ServerRequest, path: string, status = 200) {
+export async function servePublic(req: http.ServerRequest, path: string) {
   await file_server
     .serveFile(req, 'public/'+path)
-    .then(file => ({ ...file, status }))
+    .catch(makeErrorResponse)
+    .then(resp => req.respond(resp));
+}
+
+export async function serveFont(req: http.ServerRequest, path: string) {
+  await file_server
+    .serveFile(req, 'fonts/'+path)
+    .then(resp => {
+      if (resp.status === 200) {
+        resp.headers?.set('cache-control', 'public, max-age=2592000'); // 30d
+      }
+      return resp;
+    })
     .catch(makeErrorResponse)
     .then(resp => req.respond(resp));
 }
