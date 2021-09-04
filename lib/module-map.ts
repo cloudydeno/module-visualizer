@@ -2,6 +2,7 @@ import { filesize } from "https://crux.land/6wZ5Sz#filesize@v1";
 
 import { CodeModule, DenoInfo, DenoModule } from "./types.ts";
 import * as registries from "./module-registries.ts";
+import { ModuleGraphJson, ModuleJson } from "./deno-graph.ts";
 
 export class ModuleMap {
   modules = new Map<string,CodeModule>();
@@ -31,7 +32,7 @@ export class ModuleMap {
     return moduleInfo;
   }
 
-  addFile(url: string, info: DenoModule, data: DenoInfo) {
+  addFile(url: string, info: ModuleJson, data: ModuleGraphJson) {
     if (info.error != null) {
       const module = this.grabModFor(url, '#error');
       if (!module.errors) module.errors = [];
@@ -39,29 +40,29 @@ export class ModuleMap {
       return;
     }
 
-    const depEdges = [ ...info.dependencies ];
-    if (info.typeDependency) {
-      depEdges.push(info.typeDependency);
+    const depEdges = [ ...info.dependencies ?? [] ];
+    if (info.typesDependency) {
+      depEdges.push(info.typesDependency);
     }
 
     const module = this.grabModFor(url);
-    module.totalSize += info.size;
+    module.totalSize += info.size ?? 0;
     module.files.push({
       url: url,
-      deps: depEdges.flatMap(x => [x.code ?? '', x.type ?? ''].filter(x => x)),
-      size: info.size,
+      deps: depEdges.flatMap(x => [x.code?.specifier ?? '', x.type?.specifier ?? ''].filter(x => x)),
+      size: info.size ?? -1,
     });
     for (const dep of depEdges) {
-      if (dep.code) {
-        const depNode = data.modules.find(x => x.specifier === dep.code);
-        const depMod = this.grabModFor(dep.code, depNode?.error ? '#error' : undefined);
+      if (dep.code?.specifier) {
+        const depNode = data.modules.find(x => x.specifier === dep.code?.specifier);
+        const depMod = this.grabModFor(dep.code.specifier, depNode?.error ? '#error' : undefined);
         if (module !== depMod) {
           module.deps.add(depMod);
         }
       }
-      if (dep.type) {
-        const depNode = data.modules.find(x => x.specifier === dep.type);
-        const depMod = this.grabModFor(dep.type, depNode?.error ? '#error' : undefined);
+      if (dep.type?.specifier) {
+        const depNode = data.modules.find(x => x.specifier === dep.type?.specifier);
+        const depMod = this.grabModFor(dep.type.specifier, depNode?.error ? '#error' : undefined);
         if (module !== depMod) {
           module.deps.add(depMod);
         }
@@ -172,7 +173,7 @@ export class ModuleMap {
 
 }
 
-export function processDenoInfo(data: DenoInfo, args?: URLSearchParams) {
+export function processDenoInfo(data: ModuleGraphJson, args?: URLSearchParams) {
   const map = new ModuleMap(args ?? new URLSearchParams);
 
   const rootNode = data.modules.find(x => x.specifier === data.root);
@@ -188,7 +189,7 @@ export function processDenoInfo(data: DenoInfo, args?: URLSearchParams) {
   return map;
 }
 
-export function computeDependencies(data: DenoInfo, args: URLSearchParams) {
+export function computeDependencies(data: ModuleGraphJson, args: URLSearchParams) {
   const map = processDenoInfo(data, args);
 
   // Allow output different levels of processing
@@ -213,7 +214,7 @@ export function computeDependencies(data: DenoInfo, args: URLSearchParams) {
 if (import.meta.main) {
   const rawData = new TextDecoder().decode(await Deno.readAll(Deno.stdin));
   if (rawData[0] !== '{') throw new Error(`Expected JSON from "deno info --json"`);
-  const data = JSON.parse(rawData) as DenoInfo;
+  const data = JSON.parse(rawData) as ModuleGraphJson;
 
   const args = new URLSearchParams(Deno.args[0]);
 

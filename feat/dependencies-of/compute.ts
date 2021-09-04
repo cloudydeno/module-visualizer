@@ -4,6 +4,7 @@ export type { SubprocessErrorData } from "https://crux.land/Fjf2o#sub-process";
 
 import { DenoInfo } from "../../lib/types.ts";
 import { computeDependencies } from "../../lib/module-map.ts";
+import { fetchModuleGraph } from "../../lib/deno-graph.ts";
 
 
 export async function computeGraph(
@@ -13,12 +14,7 @@ export async function computeGraph(
 ) {
   if (format) args.set('format', format);
 
-  const downloadData = JSON.parse(await new SubProcess('download', {
-    cmd: ["deno", "info", "--unstable", "--json", "--", modUrl],
-    env: { "NO_COLOR": "yas" },
-    stdin: 'null',
-    errorPrefix: /^error: /,
-  }).captureAllTextOutput()) as DenoInfo;
+  const downloadData = await fetchModuleGraph(modUrl);
 
   return computeDependencies(downloadData, args);
 }
