@@ -104,6 +104,7 @@ async function load(
       case "https:": {
         if (cachedResources.has(specifier)) {
           console.log('cache hit ', specifier);
+          await new Promise(ok => setTimeout(ok, 0));
           return cachedResources.get(specifier);
         }
         console.log('cache MISS', specifier);
