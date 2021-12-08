@@ -13,6 +13,7 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
       if (parts[3] === 'std' && isolateStd) return parts.slice(0, 8).join('/');
       return parts.slice(0, 6).join('/');
     case 'crux.land':
+      if (parts.length == 4) return `${url.origin}/${parts[3]}`;
       return `${url.origin}/${parts[5].split('.')[0]}`;
     case 'esm.sh':
       return parts.slice(0, 4 + (parts[3][0] === '@' ? 1 : 0)).join('/');
