@@ -30,12 +30,13 @@ jobs:
 
     # "file" cache: code from source control
     # We're more selective here to prevent cross-branch contamination
-    - name: Cache file://
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/deno/gen/file
-        key: deno/${{ matrix.deno-version }}-file/v1-${{ github.ref }}-${{ github.sha }}
-        restore-keys: deno/${{ matrix.deno-version }}-file/v1-${{ github.ref }}-
+    # Disabled for now because https://github.com/denoland/deno/pull/12830
+    # - name: Cache file://
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: ~/.cache/deno/gen/file
+    #     key: deno/${{ matrix.deno-version }}-file/v1-${{ github.ref }}-${{ github.sha }}
+    #     restore-keys: deno/${{ matrix.deno-version }}-file/v1-${{ github.ref }}-
 
     # "https" cache: code from the Internet
     # External sources won't change much so we use less precise keys
