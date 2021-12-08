@@ -43,35 +43,26 @@ export class ModuleMap {
       return;
     }
 
-    const depEdges = [ ...info.dependencies ];
-    if (info.typeDependency) {
-      depEdges.push(info.typeDependency);
+    const depEdges = info.dependencies.flatMap(x => [
+      x.code?.specifier ?? '',
+      x.type?.specifier ?? '',
+    ].filter(x => x));
+    if (info.typesDependency?.dependency.specifier) {
+      depEdges.push(info.typesDependency.dependency.specifier);
     }
 
     const module = this.grabModFor(url);
     module.totalSize += info.size;
     module.files.push({
       url: url,
-      deps: depEdges.flatMap(x => [
-        x.code?.specifier ?? '',
-        x.type?.specifier ?? '',
-      ].filter(x => x)),
+      deps: depEdges,
       size: info.size,
     });
     for (const dep of depEdges) {
-      if (dep.code) {
-        const depNode = data.modules.find(x => x.specifier === dep.code?.specifier);
-        const depMod = this.grabModFor(dep.code.specifier, depNode?.error ? '#error' : undefined);
-        if (module !== depMod) {
-          module.deps.add(depMod);
-        }
-      }
-      if (dep.type) {
-        const depNode = data.modules.find(x => x.specifier === dep.type?.specifier);
-        const depMod = this.grabModFor(dep.type.specifier, depNode?.error ? '#error' : undefined);
-        if (module !== depMod) {
-          module.deps.add(depMod);
-        }
+      const depNode = data.modules.find(x => x.specifier === dep);
+      const depMod = this.grabModFor(dep, depNode?.error ? '#error' : undefined);
+      if (module !== depMod) {
+        module.deps.add(depMod);
       }
     }
   }
