@@ -30,24 +30,22 @@ export async function templateHtml(templatePath: string, replacements: Record<st
   });
 }
 
-export async function serveTemplatedHtml(req: http.ServerRequest, templatePath: string, replacements: Record<string,string> = {}) {
-  await templateHtml(templatePath, replacements)
-    .then(body => ({ body,
+export async function serveTemplatedHtml(req: Request, templatePath: string, replacements: Record<string,string> = {}) {
+  return await templateHtml(templatePath, replacements)
+    .then(body => new Response(body, {
       headers: HtmlHeaders,
     }))
-    .catch(makeErrorResponse)
-    .then(resp => req.respond(resp));
+    .catch(makeErrorResponse);
 }
 
-export async function servePublic(req: http.ServerRequest, path: string) {
-  await file_server
+export async function servePublic(req: Request, path: string) {
+  return await file_server
     .serveFile(req, 'public/'+path)
-    .catch(makeErrorResponse)
-    .then(resp => req.respond(resp));
+    .catch(makeErrorResponse);
 }
 
-export async function serveFont(req: http.ServerRequest, path: string) {
-  await file_server
+export async function serveFont(req: Request, path: string) {
+  return await file_server
     .serveFile(req, 'fonts/'+path)
     .then(resp => {
       if (resp.status === 200) {
@@ -55,23 +53,20 @@ export async function serveFont(req: http.ServerRequest, path: string) {
       }
       return resp;
     })
-    .catch(makeErrorResponse)
-    .then(resp => req.respond(resp));
+    .catch(makeErrorResponse);
 }
 
-export function makeErrorResponse(err: Error): http.Response {
+export function makeErrorResponse(err: Error): Response {
   if (err.name === 'NotFound') {
-    return {
+    return new Response('404 Not Found', {
       status: 404,
-      body: '404 Not Found',
       headers: TextHeaders,
-    };
+    });
   } else {
     console.log(err.stack);
-    return {
+    return new Response('Internal Server Error:\n' + err.message, {
       status: 500,
-      body: 'Internal Server Error:\n' + err.message,
       headers: TextHeaders,
-    };
+    });
   }
 }

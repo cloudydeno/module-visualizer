@@ -15,16 +15,15 @@ export interface CodeModule {
 
 
 export interface DenoInfo {
-  root:    string;
-  modules: DenoModule[];
-  size:    number;
+  roots:     string[];
+  modules:   DenoModule[];
+  redirects: Record<string,string>;
 }
 
 interface DenoModuleInfo {
   size:         number;
   mediaType:    DenoMediaType;
   local:        string;
-  checksum:     string;
   emit?:        string;
   error:        undefined;
 }
@@ -42,9 +41,8 @@ export type DenoModule = {
 
 export interface DenoDependency {
   specifier: string;
-  isDynamic: boolean;
-  code?:     string; // url
-  type?:     string; // url
+  code?:     { specifier: string }; // also the span
+  type?:     { specifier: string }; // also the span
 }
 
 export type DenoMediaType =

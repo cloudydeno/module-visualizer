@@ -8,14 +8,18 @@ export class ModuleMap {
   mainModule: CodeModule | null = null;
   mainFile: string | null = null;
 
-  constructor(public args: URLSearchParams) {
+  constructor(
+    public args: URLSearchParams,
+    public redirects: Record<string,string>,
+  ) {
     this.isolateStd = this.args.get('std') === 'isolate';
   }
   isolateStd: boolean;
 
   grabModFor(url: string, fragment: string = '') {
     const wireUrl = url.split('#')[0];
-    const base = registries.determineModuleBase(wireUrl, this.isolateStd);
+    const actualUrl = this.redirects[wireUrl] || wireUrl;
+    const base = registries.determineModuleBase(actualUrl, this.isolateStd);
     let moduleInfo = this.modules.get(base + fragment);
     if (!moduleInfo) {
       moduleInfo = {
@@ -48,20 +52,23 @@ export class ModuleMap {
     module.totalSize += info.size;
     module.files.push({
       url: url,
-      deps: depEdges.flatMap(x => [x.code ?? '', x.type ?? ''].filter(x => x)),
+      deps: depEdges.flatMap(x => [
+        x.code?.specifier ?? '',
+        x.type?.specifier ?? '',
+      ].filter(x => x)),
       size: info.size,
     });
     for (const dep of depEdges) {
       if (dep.code) {
-        const depNode = data.modules.find(x => x.specifier === dep.code);
-        const depMod = this.grabModFor(dep.code, depNode?.error ? '#error' : undefined);
+        const depNode = data.modules.find(x => x.specifier === dep.code?.specifier);
+        const depMod = this.grabModFor(dep.code.specifier, depNode?.error ? '#error' : undefined);
         if (module !== depMod) {
           module.deps.add(depMod);
         }
       }
       if (dep.type) {
-        const depNode = data.modules.find(x => x.specifier === dep.type);
-        const depMod = this.grabModFor(dep.type, depNode?.error ? '#error' : undefined);
+        const depNode = data.modules.find(x => x.specifier === dep.type?.specifier);
+        const depMod = this.grabModFor(dep.type.specifier, depNode?.error ? '#error' : undefined);
         if (module !== depMod) {
           module.deps.add(depMod);
         }
@@ -173,11 +180,16 @@ export class ModuleMap {
 }
 
 export function processDenoInfo(data: DenoInfo, args?: URLSearchParams) {
-  const map = new ModuleMap(args ?? new URLSearchParams);
+  const map = new ModuleMap(args ?? new URLSearchParams, data.redirects);
 
-  const rootNode = data.modules.find(x => x.specifier === data.root);
-  map.mainModule = map.grabModFor(data.root, rootNode?.error ? '#error' : undefined);
-  map.mainFile = data.root;
+  // TODO: when are there multiple roots?
+  const roots = data.roots.map(x => data.redirects[x] || x);
+  const rootNode = data.modules.find(x => roots.includes(x.specifier));
+  if (!rootNode) throw new Error(
+    `I didn't find a root node in the Deno graph! This is a module-visualizer bug.`);
+
+  map.mainModule = map.grabModFor(rootNode.specifier, rootNode.error ? '#error' : undefined);
+  map.mainFile = rootNode.specifier;
 
   for (const info of data.modules) {
     map.addFile(info.specifier, info, data);

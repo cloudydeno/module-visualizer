@@ -1,7 +1,7 @@
 import {
-  http,
   entities,
-  readerFromIterable,
+  readableStreamFromReader,
+  readableStreamFromIterable,
 } from "../../deps.ts";
 
 import { templateHtml, makeErrorResponse, HtmlHeaders } from '../../lib/request-handling.ts';
@@ -11,10 +11,10 @@ import {
   SubProcess, SubprocessErrorData,
 } from "./compute.ts";
 
-export async function handleRequest(req: http.ServerRequest, modSlug: string, args: URLSearchParams) {
+export async function *handleRequest(req: Request, modSlug: string, args: URLSearchParams) {
   if (modSlug == '') {
     const url = args.get('url');
-    if (!url) return false;
+    if (!url) return;
     args.delete('url');
 
     // clean up query parameters
@@ -26,55 +26,57 @@ export async function handleRequest(req: http.ServerRequest, modSlug: string, ar
     }
 
     const slug = await findModuleSlug(url);
-    await req.respond({
+    const location = slug + (args.toString() ? `?${args}` : '');
+    yield new Response(`302: ${location}`, {
       status: 302,
-      headers: new Headers({
-        'location': slug + (args.toString() ? `?${args}` : ''),
-      }),
+      headers: { location },
     });
-    return true;
   }
 
   const modUrl = await resolveModuleUrl(modSlug);
-  if (!modUrl) return false;
+  if (!modUrl) return;
 
   switch (args.get('format')) {
     case 'json':
-      await serveBufferedOutput(req, computeGraph(modUrl, args), 'application/json');
-      return true;
+      yield serveBufferedOutput(req, computeGraph(modUrl, args), 'application/json');
+      return;
     case 'dot':
-      await serveBufferedOutput(req, computeGraph(modUrl, args), 'text/plain; charset=utf-8');
-      return true;
+      yield serveBufferedOutput(req, computeGraph(modUrl, args), 'text/plain; charset=utf-8');
+      return;
     case 'svg':
-      await serveStreamingOutput(req, renderGraph(modUrl, ["-Tsvg"], args), 'image/svg+xml');
-      return true;
+      yield serveStreamingOutput(req, renderGraph(modUrl, ["-Tsvg"], args), 'image/svg+xml');
+      return;
     case null:
-      await serveHtmlGraphPage(req, modUrl, modSlug, args);
-      return true;
+      yield serveHtmlGraphPage(req, modUrl, modSlug, args);
+      return;
   }
 }
 
-async function serveBufferedOutput(req: http.ServerRequest, computation: Promise<string>, contentType: string) {
-  await req.respond(await computation
-    .then(buffer => ({
+async function serveBufferedOutput(req: Request, computation: Promise<string>, contentType: string) {
+  return await computation
+    .then(buffer => new Response(buffer, {
       status: 200,
-      body: buffer,
-      headers: new Headers({
+      headers: {
         'content-type': contentType,
-      }),
-    }), makeErrorResponse));
+      },
+    }), makeErrorResponse);
 }
 
-async function serveStreamingOutput(req: http.ServerRequest, computation: Promise<SubProcess>, contentType: string) {
-  await req.respond(await computation
-    .then(proc => proc.toStreamingResponse({
-      'content-type': contentType,
-    }), makeErrorResponse));
+async function serveStreamingOutput(req: Request, computation: Promise<SubProcess>, contentType: string) {
+  return await computation
+    .then(proc => {
+      proc.status(); // throw this away because not really a way of reporting problems mid-stream
+      return new Response(readableStreamFromReader(proc.proc.stdout), {
+        status: 200,
+        headers: {
+          'content-type': contentType,
+        }});
+    }, makeErrorResponse);
 }
 
 const hideLoadMsg = `<style type="text/css">#graph-waiting { display: none; }</style>`;
 
-async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSlug: string, args: URLSearchParams) {
+async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string, args: URLSearchParams) {
   args.set('font', 'Archivo Narrow');
 
   // Render the basic page first, so we can error more cleanly if that fails
@@ -86,8 +88,7 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSl
       export_prefix: entities.encode(`${req.url}${req.url.includes('?') ? '&' : '?'}format=`),
     });
   } catch (err) {
-    await req.respond(makeErrorResponse(err));
-    return;
+    return makeErrorResponse(err);
   }
 
   const graphPromise = ((args.get('renderer') === 'interactive')
@@ -135,23 +136,23 @@ async function serveHtmlGraphPage(req: http.ServerRequest, modUrl: string, modSl
         <h5>Sorry about that. Perhaps double check that the given URL is functional, or try another module URL.</h5>
         </div>`.replace(/^ +/gm, '');
     }
+    console.error('Graph computation error:', err.stack);
     return `<div id="graph-error">${entities.encode(err.stack)}</div>`;
   });
 
   // Return the body in two parts, with a comment in between
-  await req.respond({
+  return new Response(readableStreamFromIterable((async function*() {
+    const encoder = new TextEncoder();
+    yield encoder.encode(pageHtml);
+
+    yield encoder.encode("\n<!-- now waiting for graph ... ");
+    const d0 = Date.now();
+    const graphText = hideLoadMsg + await graphPromise;
+    const millis = Date.now() - d0;
+    yield encoder.encode(`completed in ${millis}ms -->\n\n`);
+
+    yield encoder.encode(graphText);
+  }())), {
     headers: HtmlHeaders,
-    body: readerFromIterable((async function*() {
-      const encoder = new TextEncoder();
-      yield encoder.encode(pageHtml);
-
-      yield encoder.encode("\n<!-- now waiting for graph ... ");
-      const d0 = Date.now();
-      const graphText = hideLoadMsg + await graphPromise;
-      const millis = Date.now() - d0;
-      yield encoder.encode(`completed in ${millis}ms -->\n\n`);
-
-      yield encoder.encode(graphText);
-    }())),
-  })
+  });
 }

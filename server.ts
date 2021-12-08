@@ -16,11 +16,19 @@ try {
 }
 
 console.log('Setting up on', { port });
-for await (const req of http.serve({ port })) {
-  handleReq(req);
-}
+http.serve(async request => {
+  for await (const response of handleReq(request)) {
+    return response;
+  }
+  console.log('reached 404');
+  return new Response('404 Not Found', {
+    status: 404,
+  });
+}, {
+  addr: `:${port}`,
+});
 
-async function handleReq(req: http.ServerRequest) {
+async function *handleReq(req: Request) {
   console.log(req.method, req.url);
   const url = new URL(req.url, 'http://localhost');
   const args = new URLSearchParams(url.search);
@@ -28,26 +36,25 @@ async function handleReq(req: http.ServerRequest) {
   { // feature: dependencies-of
     const match = url.pathname.match(/^\/dependencies-of\/(.*)$/);
     if (match && req.method === 'GET') {
-      if (await DependenciesOf.handleRequest(req, match[1], args)) return;
+      yield* DependenciesOf.handleRequest(req, match[1], args);
     }
   }
 
   { // feature: shields
     const match = url.pathname.match(/^\/shields\/([^\/]+)\/(.+)$/);
     if (match && req.method === 'GET') {
-      if (await Shields.handleRequest(req, match[1], match[2])) return;
+      yield* Shields.handleRequest(req, match[1], match[2]);
     }
   }
 
   { // feature: registry-key
     if (url.pathname === '/registry-key' && req.method === 'GET') {
-      if (await RegistryKey.handleRequest(req)) return;
+      yield RegistryKey.handleRequest(req);
     }
   }
 
   if (url.pathname === '/') {
-    await serveTemplatedHtml(req, 'public/index.html');
-    return;
+    yield serveTemplatedHtml(req, 'public/index.html');
   }
 
   if ([
@@ -55,18 +62,11 @@ async function handleReq(req: http.ServerRequest) {
     '/icon-deps.png',
     '/interactive-graph.js',
   ].includes(url.pathname)) {
-    await servePublic(req, url.pathname);
-    return;
+    yield servePublic(req, url.pathname);
   }
 
   if (url.pathname.startsWith('/fonts/') &&
       url.pathname.endsWith('.woff2')) {
-    await serveFont(req, url.pathname.slice(6));
-    return;
+    yield serveFont(req, url.pathname.slice(6));
   }
-
-  await req.respond({
-    status: 404,
-    body: '404 Not Found',
-  });
 }

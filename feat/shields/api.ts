@@ -1,4 +1,4 @@
-import { http, filesize, SubProcess, entities } from "../../deps.ts";
+import { filesize, SubProcess, entities } from "../../deps.ts";
 
 import { serveTemplatedHtml } from '../../lib/request-handling.ts';
 import { CodeModule } from "../../lib/types.ts";
@@ -6,81 +6,71 @@ import { resolveModuleUrl } from "../../lib/resolve.ts";
 import { processDenoInfo, ModuleMap } from "../../lib/module-map.ts";
 import { determineModuleAttrs } from "../../lib/module-registries.ts";
 
-export async function handleRequest(req: http.ServerRequest, shieldId: string, modSlug: string) {
+export async function *handleRequest(req: Request, shieldId: string, modSlug: string) {
   const modUrl = await resolveModuleUrl(modSlug);
-  if (!modUrl) return false;
+  if (!modUrl) return;
   switch (shieldId) {
 
     case 'dep-count':
-      computeGraph(modUrl)
+      yield computeGraph(modUrl)
         .then(makeDepCountShield)
-        .catch(makeErrorShield)
-        .then(resp => req.respond(resp));
-      return true;
+        .catch(makeErrorShield);
+      return;
 
     case 'updates':
-      computeGraph(modUrl)
+      yield computeGraph(modUrl)
         .then(makeUpdatesShield)
-        .catch(makeErrorShield)
-        .then(resp => req.respond(resp));
-      return true;
+        .catch(makeErrorShield);
+      return;
 
     case 'cache-size':
-      computeGraph(modUrl)
+      yield computeGraph(modUrl)
         .then(makeCacheSizeShield)
-        .catch(makeErrorShield)
-        .then(resp => req.respond(resp));
-      return true;
+        .catch(makeErrorShield);
+      return;
 
     case 'latest-version':
       if (modSlug.startsWith('x/')) {
-        makeXLatestVersionShield(modSlug.split('/')[1].split('@')[0])
-          .catch(makeErrorShield)
-          .then(resp => req.respond(resp));
-        return true;
+        yield makeXLatestVersionShield(modSlug.split('/')[1].split('@')[0])
+          .catch(makeErrorShield);
       }
-      return false;
+      return;
 
     case 'setup':
-      serveTemplatedHtml(req, 'feat/shields/public.html', {
+      yield serveTemplatedHtml(req, 'feat/shields/public.html', {
         module_slug: entities.encode(modSlug),
         module_url: entities.encode(modUrl),
         module_slug_component: encodeURIComponent(modSlug),
       });
-      return true;
-
-    default:
-      return false;
+      return;
   }
 }
 
 export async function computeGraph(modUrl: string) {
   const downloadData = await new SubProcess('download', {
-    cmd: ["deno", "info", "--unstable", "--json", "--", modUrl],
+    cmd: ["deno", "info", "--json", "--", modUrl],
     stdin: 'null',
     errorPrefix: /^error: /,
   }).captureAllTextOutput();
   return processDenoInfo(JSON.parse(downloadData));
 }
 
-function makeDepCountShield(map: ModuleMap): http.Response {
+function makeDepCountShield(map: ModuleMap): Response {
   const pkgCount = map.modules.size - 1;
-  return {
+  return new Response(JSON.stringify({
+    schemaVersion: 1,
+    label: "dependencies",
+    message: `${pkgCount}`,
+    color: "informational",
+    cacheSeconds: 4 * 60 * 60,
+  }), {
     status: 200,
-    body: JSON.stringify({
-      schemaVersion: 1,
-      label: "dependencies",
-      message: `${pkgCount}`,
-      color: "informational",
-      cacheSeconds: 4 * 60 * 60,
-    }),
-    headers: new Headers({
+    headers: {
       'content-type': 'application/json',
-    }),
-  };
+    }});
 }
 
-async function makeUpdatesShield(map: ModuleMap): Promise<http.Response> {
+async function makeUpdatesShield(map: ModuleMap): Promise<Response> {
   const mod: CodeModule | null = map.mainModule;
   if (!mod) throw new Error(`No main module found?`);
 
@@ -135,20 +125,19 @@ async function makeUpdatesShield(map: ModuleMap): Promise<http.Response> {
     : audit.moderate ? 'moderate'
     : false;
   if (vuln) {
-    return {
+    return new Response(JSON.stringify({
+      schemaVersion: 1,
+      namedLogo: 'npm',
+      label: 'dependencies',
+      message: `${vuln} vulnerability`,
+      color: 'red',
+      cacheSeconds: 2 * 60 * 60,
+    }), {
       status: 200,
-      body: JSON.stringify({
-        schemaVersion: 1,
-        namedLogo: 'npm',
-        label: 'dependencies',
-        message: `${vuln} vulnerability`,
-        color: 'red',
-        cacheSeconds: 2 * 60 * 60,
-      }),
-      headers: new Headers({
+      headers: {
         'content-type': 'application/json',
-      }),
-    };
+      },
+    });
   }
 
   const loads = Array.from(mod.deps.values())
@@ -202,61 +191,55 @@ async function makeUpdatesShield(map: ModuleMap): Promise<http.Response> {
   const updatedFraction = decisions.filter(x => x).length / decisions.length;
 
   // like https://david-dm.org/
-  return {
+  return new Response(JSON.stringify({
+    schemaVersion: 1,
+    namedLogo: isPureDeno ? 'deno' : undefined,
+    label: 'dependencies',
+    message: updatedFraction <= 0.75 ? 'out of date' : 'up to date',
+    color: updatedFraction <= 0.5 ? 'red'
+         : updatedFraction <= 0.75 ? 'orange'
+         : updatedFraction < 1 ? 'yellow'
+         : 'green',
+    cacheSeconds: 2 * 60 * 60,
+  }), {
     status: 200,
-    body: JSON.stringify({
-      schemaVersion: 1,
-      namedLogo: isPureDeno ? 'deno' : undefined,
-      label: 'dependencies',
-      message: updatedFraction <= 0.75 ? 'out of date' : 'up to date',
-      color: updatedFraction <= 0.5 ? 'red'
-           : updatedFraction <= 0.75 ? 'orange'
-           : updatedFraction < 1 ? 'yellow'
-           : 'green',
-      cacheSeconds: 2 * 60 * 60,
-    }),
-    headers: new Headers({
+    headers: {
       'content-type': 'application/json',
-    }),
-  };
+    }});
 }
 
-function makeCacheSizeShield(map: ModuleMap): http.Response {
+function makeCacheSizeShield(map: ModuleMap): Response {
   const totalSize = Array.from(map.modules.values())
     .reduce((sum, next) => sum + next.totalSize, 0);
 
-  return {
+  return new Response(JSON.stringify({
+    schemaVersion: 1,
+    label: "install size",
+    message: filesize(totalSize),
+    color: "informational",
+    cacheSeconds: 4 * 60 * 60,
+  }), {
     status: 200,
-    body: JSON.stringify({
-      schemaVersion: 1,
-      label: "install size",
-      message: filesize(totalSize),
-      color: "informational",
-      cacheSeconds: 4 * 60 * 60,
-    }),
-    headers: new Headers({
+    headers: {
       'content-type': 'application/json',
-    }),
-  };
+    }});
 }
 
-async function makeXLatestVersionShield(modId: string): Promise<http.Response> {
+async function makeXLatestVersionShield(modId: string): Promise<Response> {
   const {latest, versions} = await fetch(`https://cdn.deno.land/${modId}/meta/versions.json`).then(x => x.json()) as {latest: string, versions: string[]};
 
-  return {
+  return new Response(JSON.stringify({
+    schemaVersion: 1,
+    label: "deno.land/x",
+    namedLogo: 'deno',
+    message: latest,
+    color: "informational",
+    cacheSeconds: 1 * 60 * 60,
+  }), {
     status: 200,
-    body: JSON.stringify({
-      schemaVersion: 1,
-      label: "deno.land/x",
-      namedLogo: 'deno',
-      message: latest,
-      color: "informational",
-      cacheSeconds: 1 * 60 * 60,
-    }),
-    headers: new Headers({
+    headers: {
       'content-type': 'application/json',
-    }),
-  };
+    }});
 }
 
 function toObject<T>(iter: Iterable<[string,T]>): Record<string,T> {
@@ -268,22 +251,18 @@ function toObject<T>(iter: Iterable<[string,T]>): Record<string,T> {
 }
 
 
-export function makeErrorShield(err: Error): http.Response {
-  const headers = new Headers({
-    'content-type': 'application/json',
-  });
-
+export function makeErrorShield(err: Error): Response {
   console.log(err.stack);
-  return {
+  return new Response(JSON.stringify({
+    schemaVersion: 1,
+    label: "badge failed",
+    message: err.name,
+    color: "inactive",
+    isError: true,
+    cacheSeconds: 4 * 60 * 60,
+  }), {
     status: 500,
-    body: JSON.stringify({
-      schemaVersion: 1,
-      label: "badge failed",
-      message: err.name,
-      color: "inactive",
-      isError: true,
-      cacheSeconds: 4 * 60 * 60,
-    }),
-    headers,
-  };
+    headers: {
+      'content-type': 'application/json',
+    }});
 }
