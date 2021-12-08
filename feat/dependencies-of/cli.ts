@@ -1,4 +1,4 @@
-import * as Flags from "https://deno.land/std@0.105.0/flags/mod.ts";
+import * as Flags from "https://deno.land/std@0.115.0/flags/mod.ts";
 const flags = Flags.parse(Deno.args, {
   alias: {
     output: ['o'],

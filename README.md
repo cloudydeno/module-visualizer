@@ -6,7 +6,7 @@ Live @ https://deno-visualizer.danopia.net
 
 This tool shows a Graphviz rendering of high-level module dependencies.
 
-The implementation is effectively similar to this shell pipeline:
+The implementation was initially represented by this shell pipeline:
 
 ```sh
 deno info --unstable --json -- "$moduleUrl" \
@@ -18,6 +18,11 @@ Several output types are available.
 HTML and SVG renderings are the intended way of viewing the graph.
 In addition, the dot process can be removed to export raw JSON data from the computation phase.
 These are available as hyperlinks from the HTML output.
+
+> Note: Over time, the above pipeline is being consolidated into a Deno-native module.
+> * `deno info` will be replaced with `/x/deno_graph` when Deno WASM is more mature and graph loading performance is comparable.
+> * `deno run` has been removed already (the JSON is processed in the main process now).
+> * `dot -Tsvg` might eventually be replaced with a WebAssembly build of GraphViz :) Font measuring will be a tricky point with that.
 
 ## Deploy
 

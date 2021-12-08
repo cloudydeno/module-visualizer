@@ -16,6 +16,7 @@ jobs:
         deno-version:
         - v1.11
         - v1.13
+        - v1.16
         - canary
       fail-fast: false # run each branch to completion
 
