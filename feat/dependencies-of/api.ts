@@ -117,9 +117,12 @@ async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string,
       .then(dotProc => dotProc.captureAllOutput())
       .then(raw => {
         const fullSvg = new TextDecoder().decode(raw);
+        const attrs = [`id="graph"`];
+        const svgWidth = fullSvg.match(/viewBox="(?:([0-9.-]+) ){3}/)?.[1];
+        if (svgWidth) attrs.push(`style="max-width: ${parseInt(svgWidth)*2}px;"`);
         return fullSvg
           .slice(fullSvg.indexOf('<!--'))
-          .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg id="graph"');
+          .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg '+attrs.join(' '));
       })
 
   ).catch(err => {

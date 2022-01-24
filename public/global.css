@@ -42,6 +42,7 @@ input.url {
 svg#graph {
   grid-area: graph;
   max-height: 100%;
+  justify-self: center;
 }
 #graph text {
   fill: #111;
