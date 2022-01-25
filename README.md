@@ -2,9 +2,27 @@
 
 Live @ https://deno-visualizer.danopia.net
 
-## `/dependencies-of/`
-
 This tool shows a Graphviz rendering of high-level module dependencies.
+
+## CLI Usage
+
+```sh
+$ deno install -f -n deno-graph --allow-run=deno,dot https://raw.githubusercontent.com/cloudydeno/module-visualizer/main/feat/dependencies-of/cli.ts
+✅ Successfully installed deno-graph
+
+$ deno-graph https://deno.land/x/djwt@v2.4/mod.ts
+digraph "imported modules" {
+  rankdir="TB";
+
+  "https://deno.land/x/djwt@v2.4"[shape="box",label="/x/djwt@v2.4\l4 files, 9 KB\l",penwidth="1.6931471805599454",fontname="Arial",style="filled",tooltip="https://deno.land/x/djwt@v2.4",fillcolor="lightskyblue",href="https://deno.land/x/djwt@v2.4"];
+  "https://deno.land/x/djwt@v2.4" -> "https://deno.land/std@0.105.0";
+
+  "https://deno.land/std@0.105.0"[shape="box",label="/std@0.105.0\l    • /encoding\l2 files, 3 KB\l",penwidth="1",fontname="Arial",style="filled",tooltip="https://deno.land/std@0.105.0",fillcolor="lightgreen",href="https://deno.land/std@0.105.0"];
+
+}
+```
+
+## `/dependencies-of/`
 
 The implementation was initially represented by this shell pipeline:
 
