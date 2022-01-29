@@ -5,21 +5,28 @@ import * as registries from "./module-registries.ts";
 
 export class ModuleMap {
   modules = new Map<string,CodeModule>();
-  mainModule: CodeModule | null = null;
-  mainFile: string | null = null;
+  mainModule: CodeModule;
+  registryOpts: registries.RegistryOpts;
 
   constructor(
     public args: URLSearchParams,
     public redirects: Record<string,string>,
+    public rootNode: DenoModule,
   ) {
-    this.isolateStd = this.args.get('std') === 'isolate';
+    this.registryOpts = {
+      mainModule: rootNode.specifier,
+      isolateStd: this.args.get('std') === 'isolate',
+    }
+
+    this.mainModule = this.grabModFor(
+      rootNode.specifier,
+      rootNode.error ? '#error' : undefined);
   }
-  isolateStd: boolean;
 
   grabModFor(url: string, fragment: string = '') {
     const wireUrl = url.split('#')[0];
     const actualUrl = this.redirects[wireUrl] || wireUrl;
-    const base = registries.determineModuleBase(actualUrl, this.isolateStd);
+    const base = registries.determineModuleBase(actualUrl, this.registryOpts);
     let moduleInfo = this.modules.get(base + fragment);
     if (!moduleInfo) {
       moduleInfo = {
@@ -79,7 +86,7 @@ export class ModuleMap {
     for (const module of this.modules.values()) {
       modules[module.base+module.fragment] = {
         moduleDeps: Array.from(module.deps).map(x => x.base+x.fragment),
-        labelText: registries.determineModuleLabel(module, this.isolateStd),
+        labelText: registries.determineModuleLabel(module, this.registryOpts),
         totalSize: module.totalSize,
         fileCount: module.files.length,
         errors: module.errors,
@@ -96,7 +103,7 @@ export class ModuleMap {
     for (const module of this.modules.values()) {
       // console.log(module.base, Array.from(module.deps.values()).map(x => x.base));
 
-      const labels = registries.determineModuleLabel(module, this.isolateStd);
+      const labels = registries.determineModuleLabel(module, this.registryOpts);
       if (module.errors) {
         labels.unshift(`${module.errors.length} FAILED IMPORTS FROM:`);
         for (const err of module.errors) {
@@ -171,17 +178,13 @@ export class ModuleMap {
 }
 
 export function processDenoInfo(data: DenoInfo, args?: URLSearchParams) {
-  const map = new ModuleMap(args ?? new URLSearchParams, data.redirects);
-
   // TODO: when are there multiple roots?
   const roots = data.roots.map(x => data.redirects[x] || x);
   const rootNode = data.modules.find(x => roots.includes(x.specifier));
   if (!rootNode) throw new Error(
     `I didn't find a root node in the Deno graph! This is a module-visualizer bug.`);
 
-  map.mainModule = map.grabModFor(rootNode.specifier, rootNode.error ? '#error' : undefined);
-  map.mainFile = rootNode.specifier;
-
+  const map = new ModuleMap(args ?? new URLSearchParams, data.redirects, rootNode);
   for (const info of data.modules) {
     map.addFile(info.specifier, info, data);
   }

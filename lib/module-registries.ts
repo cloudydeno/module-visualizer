@@ -1,16 +1,21 @@
 import type { CodeModule } from "./types.ts";
 
-export function determineModuleBase(fullUrl: string, isolateStd: boolean): string {
+export interface RegistryOpts {
+  mainModule: string;
+  isolateStd?: boolean;
+};
+
+export function determineModuleBase(fullUrl: string, opts: RegistryOpts): string {
   const url = new URL(fullUrl);
   const parts = fullUrl.split('/');
   if (url.protocol === 'file:') return 'file://';
   if (url.protocol !== 'https:') return fullUrl;
   switch (url.host) {
     case 'deno.land':
-      if (parts[3].startsWith('std') && !isolateStd) return parts.slice(0, 4).join('/');
+      if (parts[3].startsWith('std') && !opts.isolateStd) return parts.slice(0, 4).join('/');
       return parts.slice(0, 5).join('/');
     case 'cdn.deno.land':
-      if (parts[3] === 'std' && isolateStd) return parts.slice(0, 8).join('/');
+      if (parts[3] === 'std' && opts.isolateStd) return parts.slice(0, 8).join('/');
       return parts.slice(0, 6).join('/');
     case 'crux.land':
       if (parts.length == 4) return `${url.origin}/${parts[3]}`;
@@ -75,14 +80,14 @@ export function determineModuleBase(fullUrl: string, isolateStd: boolean): strin
   return fullUrl;
 }
 
-export function determineModuleLabel(module: CodeModule, isolateStd: boolean): string[] {
+export function determineModuleLabel(module: CodeModule, opts: RegistryOpts): string[] {
   const url = new URL(module.base);
   const parts = module.base.split('/');
   if (url.protocol !== 'https:') return [module.base];
   switch (url.host) {
     case 'deno.land': {
       let extra = new Array<string>();
-      if (parts[3].startsWith('std') && !isolateStd) {
+      if (parts[3].startsWith('std') && !opts.isolateStd) {
         const folders = new Set(module.files.map(x => x.url.split('/')[4]));
         extra = Array.from(folders).map(x => `    • /${x}`);
       }
@@ -90,7 +95,7 @@ export function determineModuleLabel(module: CodeModule, isolateStd: boolean): s
     }
     case 'cdn.deno.land': {
       let extra = new Array<string>();
-      if (parts[3] === 'std' && !isolateStd) {
+      if (parts[3] === 'std' && !opts.isolateStd) {
         const folders = new Set(module.files.map(x => x.url.split('/')[7]));
         extra = Array.from(folders).map(x => `    • /${x}`);
       }

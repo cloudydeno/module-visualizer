@@ -50,6 +50,9 @@ jobs:
     - name: Check entrypoint
       run: time deno cache server.ts
 
+    - name: Run any tests
+      run: time deno test
+
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
