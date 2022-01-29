@@ -2,13 +2,18 @@ import type { CodeModule } from "./types.ts";
 
 export interface RegistryOpts {
   mainModule: string;
+  isolateFiles?: boolean;
   isolateStd?: boolean;
 };
 
 export function determineModuleBase(fullUrl: string, opts: RegistryOpts): string {
   const url = new URL(fullUrl);
   const parts = fullUrl.split('/');
-  if (url.protocol === 'file:') return 'file://';
+  if (url.protocol === 'file:') {
+    if (opts.isolateFiles) return fullUrl;
+    if (url.pathname.endsWith('deps.ts')) return fullUrl;
+    return new URL('.', url).toString();
+  }
   if (url.protocol !== 'https:') return fullUrl;
   switch (url.host) {
     case 'deno.land':
@@ -83,6 +88,24 @@ export function determineModuleBase(fullUrl: string, opts: RegistryOpts): string
 export function determineModuleLabel(module: CodeModule, opts: RegistryOpts): string[] {
   const url = new URL(module.base);
   const parts = module.base.split('/');
+  if (url.protocol === 'file:') {
+    const mainDir = new URL('.', opts.mainModule).toString();
+    const thisDir = module.base;
+    if (thisDir.startsWith(mainDir)) {
+      return [`./${thisDir.slice(mainDir.length)}`];
+    }
+    const dirNames = mainDir.split('/');
+    dirNames.pop(); // trailing slash
+    let steps = 0;
+    while (dirNames.length > 5 && ++steps && dirNames.pop()) {
+      const joined = dirNames.join('/');
+      if (thisDir.startsWith(joined+'/')) {
+        const walkUp = new Array(steps).fill('..').join('/');
+        return [`${walkUp}/${thisDir.slice(joined.length+1)}`];
+      }
+    }
+    return [thisDir];
+  }
   if (url.protocol !== 'https:') return [module.base];
   switch (url.host) {
     case 'deno.land': {

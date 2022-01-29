@@ -15,6 +15,7 @@ export class ModuleMap {
   ) {
     this.registryOpts = {
       mainModule: rootNode.specifier,
+      isolateFiles: this.args.get('files') === 'isolate',
       isolateStd: this.args.get('std') === 'isolate',
     }
 
