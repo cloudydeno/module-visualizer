@@ -14,8 +14,7 @@ jobs:
     strategy:
       matrix:
         deno-version:
-        - v1.15
-        - v1.16
+        - v1.23
         - canary
       fail-fast: false # run each branch to completion
 
@@ -48,7 +47,7 @@ jobs:
         restore-keys: deno-https/v1-
 
     - name: Check entrypoint
-      run: time deno cache server.ts
+      run: time deno cache --check=all server.ts
 
     - name: Run any tests
       run: time deno test

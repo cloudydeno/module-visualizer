@@ -50,10 +50,10 @@ export class ModuleMap {
       return;
     }
 
-    const depEdges = info.dependencies.flatMap(x => [
+    const depEdges = info.dependencies?.flatMap(x => [
       x.code?.specifier ?? '',
       x.type?.specifier ?? '',
-    ].filter(x => x));
+    ].filter(x => x)) ?? [];
     if (info.typesDependency?.dependency.specifier) {
       depEdges.push(info.typesDependency.dependency.specifier);
     }

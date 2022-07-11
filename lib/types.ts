@@ -32,7 +32,7 @@ interface DenoModuleError {
 }
 export type DenoModule = {
   specifier:        string;
-  dependencies:     DenoDependency[];
+  dependencies?:    DenoDependency[];
   typesDependency?: {
     specifier:        string;
     dependency:       { specifier: string }; // also the span
