@@ -25,7 +25,7 @@ http.serve(async request => {
     status: 404,
   });
 }, {
-  addr: `:${port}`,
+  port,
 });
 
 async function *handleReq(req: Request) {

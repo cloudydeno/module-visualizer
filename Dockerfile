@@ -1,10 +1,10 @@
-FROM denoland/deno:alpine-1.23.3
+FROM denoland/deno:alpine-1.30.1
 RUN apk add --no-cache graphviz
 ADD fonts/ /usr/share/fonts/truetype/
 
 WORKDIR /src
 ADD deps.ts .
-RUN deno cache --check=all deps.ts
+RUN deno check deps.ts
 ADD . .
-RUN deno cache --check=all server.ts
+RUN deno check server.ts
 ENTRYPOINT ["deno","run","--allow-env","--allow-net=0.0.0.0,api.github.com,cdn.deno.land,registry.npmjs.org","--allow-run=deno,dot","--allow-read=.","server.ts"]
