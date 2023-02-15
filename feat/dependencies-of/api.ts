@@ -23,7 +23,8 @@ export async function *handleRequest(req: Request, modSlug: string, args: URLSea
       args.set('renderer', 'interactive');
       args.delete('rankdir');
     }
-
+    if (args.get('focusOn') == '') args.delete('focusOn');
+    
     const slug = await findModuleSlug(url);
     const location = slug + (args.toString() ? `?${args}` : '');
     yield new Response(`302: ${location}`, {
@@ -78,13 +79,20 @@ const hideLoadMsg = `<style type="text/css">#graph-waiting { display: none; }</s
 async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string, args: URLSearchParams) {
   args.set('font', 'Archivo Narrow');
 
+  const urlWithParam = (key: string, val: string) => {
+    const url = new URL(req.url);
+    url.searchParams.set(key, val);
+    return url.toString();
+  };
+
   // Render the basic page first, so we can error more cleanly if that fails
   let pageHtml = '';
   try {
     pageHtml = await templateHtml('feat/dependencies-of/public.html', {
       module_slug: entities.encode(modSlug),
       module_url: entities.encode(modUrl),
-      export_prefix: entities.encode(`${req.url}${req.url.includes('?') ? '&' : '?'}format=`),
+      export_prefix: entities.encode(urlWithParam('export', '')),
+      focus_on: entities.encode(args.get('focusOn') ?? ''),
     });
   } catch (err) {
     return makeErrorResponse(err);
@@ -120,7 +128,19 @@ async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string,
         const svgWidth = fullSvg.match(/viewBox="(?:([0-9.-]+) ){3}/)?.[1];
         if (svgWidth) attrs.push(`style="max-width: ${parseInt(svgWidth)*2}px;"`);
         return fullSvg
-          .slice(fullSvg.indexOf('<!--'))
+          .slice(fullSvg.indexOf('<!--')-1)
+          .replaceAll(/<a [^>]+>\n<polygon [^>]+\/>/gm, tag => {
+            // if (tag.includes('fill="black"')) return tag;
+            const hrefGroups = tag.match(/\bxlink:title="([^"]+)/)!;
+            const coordGroups = tag.match(/\bpoints="([-0-9.]+),([-0-9.]+) /)!;
+            const href = entities.encode(urlWithParam('focusOn', hrefGroups[1]));
+            return [
+              `<a xlink:href="${href}" xlink:title="Isolate this module">`,
+              `<rect x="${parseFloat(coordGroups[1])}" y="${coordGroups[2]}" width="10" height="10" style="fill:rgb(0,0,255);stroke-width:1;stroke:rgb(0,0,0)" />`,
+              `</a>`,
+              tag,
+            ].join('\n');
+          })
           .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg '+attrs.join(' '));
       })
 

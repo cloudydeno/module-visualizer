@@ -3,9 +3,12 @@ import type { CodeModule } from "./types.ts";
 export interface RegistryOpts {
   mainModule: string;
   isolateStd?: boolean;
+  focusOn?: string;
 };
 
 export function determineModuleBase(fullUrl: string, opts: RegistryOpts): string {
+  if (opts.focusOn && fullUrl.startsWith(opts.focusOn)) return fullUrl;
+  
   const url = new URL(fullUrl);
   const parts = fullUrl.split('/');
   if (url.protocol === 'file:') return 'file://';

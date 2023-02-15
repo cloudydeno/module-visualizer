@@ -15,6 +15,7 @@ export class ModuleMap {
     this.registryOpts = {
       mainModule: rootNode.specifier,
       isolateStd: this.args.get('std') === 'isolate',
+      focusOn: this.args.get('focusOn') ?? void 0,
     }
 
     this.mainModule = this.grabModFor(
@@ -49,7 +50,7 @@ export class ModuleMap {
       return;
     }
 
-    const depEdges = info.dependencies?.flatMap(x => [
+    let depEdges = info.dependencies?.flatMap(x => [
       x.code?.specifier ?? '',
       x.type?.specifier ?? '',
     ].filter(x => x)) ?? [];
@@ -57,17 +58,31 @@ export class ModuleMap {
       depEdges.push(info.typesDependency.dependency.specifier);
     }
 
-    const module = this.grabModFor(url);
-    module.totalSize += info.size;
-    module.files.push({
-      url: url,
-      deps: depEdges,
-      size: info.size,
-    });
+    let chartMod = true;
+    if (this.registryOpts.focusOn) {
+      if (!url.startsWith(this.registryOpts.focusOn)) {
+        const relevantDeps = depEdges.filter(x => x.startsWith(this.registryOpts.focusOn!));
+        if (relevantDeps.length == 0) {
+          chartMod = false;
+        }
+        depEdges = relevantDeps;
+      }
+    }
+
+    let module: CodeModule | null = null;
+    if (chartMod) {
+      module = this.grabModFor(url);
+      module.totalSize += info.size;
+      module.files.push({
+        url: url,
+        deps: depEdges,
+        size: info.size,
+      });
+    }
     for (const dep of depEdges) {
       const depNode = data.modules.find(x => x.specifier === dep);
       const depMod = this.grabModFor(dep, depNode?.error ? '#error' : undefined);
-      if (module !== depMod) {
+      if (module && module !== depMod) {
         module.deps.add(depMod);
       }
     }
@@ -109,7 +124,7 @@ export class ModuleMap {
           labels.push('    • '+err.split('\n')[0].split(': ').slice(1).join(': '));
         }
         // throw new Error(`TODO: module ${url} failed: ${JSON.stringify(info.error)}`);
-      } else {
+      } else if (module.files.length > 0) {
         labels.push(`${module.files.length} files, ${filesize(module.totalSize, {round: 0})}`);
       }
 
