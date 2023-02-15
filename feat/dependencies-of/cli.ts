@@ -5,10 +5,22 @@ const flags = Flags.parse(Deno.args, {
   alias: {
     output: ['o'],
   },
+  boolean: [
+    'isolate-std',
+    'isolate-files',
+  ],
 });
 if (flags._.length !== 1) {
   console.error(`usage: cli.ts <path/to/module.ts> [-o output.{png,svg,jpg,jpeg}]`);
   Deno.exit(4);
+}
+
+const graphParams = new URLSearchParams();
+if (flags['isolate-std']) {
+  graphParams.set('std', 'isolate');
+}
+if (flags['isolate-files']) {
+  graphParams.set('files', 'isolate');
 }
 
 import { computeGraph, renderGraph } from "./compute.ts";
@@ -25,10 +37,10 @@ if (flags.output) {
   const dotProc = await renderGraph(modUrl, [
     `-o${flags.output}`,
     `-T${ext}`,
-  ], new URLSearchParams());
+  ], graphParams);
   console.log(await dotProc.captureAllTextOutput());
 
 } else {
-  const dotText = await computeGraph(modUrl, new URLSearchParams(), 'dot');
+  const dotText = await computeGraph(modUrl, graphParams, 'dot');
   console.log(dotText);
 }
