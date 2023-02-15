@@ -2,14 +2,13 @@ import {
   entities,
   readableStreamFromReader,
   readableStreamFromIterable,
+  SubProcess,
+  type SubprocessErrorData,
 } from "../../deps.ts";
 
 import { templateHtml, makeErrorResponse, HtmlHeaders } from '../../lib/request-handling.ts';
 import { findModuleSlug, resolveModuleUrl } from "../../lib/resolve.ts";
-import {
-  computeGraph, renderGraph,
-  SubProcess, SubprocessErrorData,
-} from "./compute.ts";
+import { computeGraph, renderGraph } from "./compute.ts";
 
 export async function *handleRequest(req: Request, modSlug: string, args: URLSearchParams) {
   if (modSlug == '') {

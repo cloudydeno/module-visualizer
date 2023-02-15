@@ -1,7 +1,4 @@
-import { SubProcess } from "https://crux.land/2isPVe#sub-process";
-export { SubProcess };
-export type { SubprocessErrorData } from "https://crux.land/2isPVe#sub-process";
-
+import { SubProcess } from "../../deps.ts";
 import { DenoInfo } from "../../lib/types.ts";
 import { computeDependencies } from "../../lib/module-map.ts";
 

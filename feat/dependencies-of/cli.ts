@@ -1,7 +1,9 @@
 #!/usr/bin/env -S deno run --allow-run=deno,dot
 
-import * as Flags from "https://deno.land/std@0.177.0/flags/mod.ts";
-const flags = Flags.parse(Deno.args, {
+import { parseFlags } from "../../deps.ts";
+import { computeGraph, renderGraph } from "./compute.ts";
+
+const flags = parseFlags(Deno.args, {
   alias: {
     output: ['o'],
   },
@@ -10,8 +12,6 @@ if (flags._.length !== 1) {
   console.error(`usage: cli.ts <path/to/module.ts> [-o output.{png,svg,jpg,jpeg}]`);
   Deno.exit(4);
 }
-
-import { computeGraph, renderGraph } from "./compute.ts";
 
 const modUrl = `${flags._[0]}`;
 if (flags.output) {
