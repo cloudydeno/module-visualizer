@@ -1,5 +1,5 @@
-import { filesize } from "../deps.ts";
-import { CodeModule, DenoInfo, DenoModule } from "./types.ts";
+import { filesize, ModuleGraphJson, ModuleJson } from "../deps.ts";
+import { CodeModule } from "./types.ts";
 import * as registries from "./module-registries.ts";
 
 export class ModuleMap {
@@ -10,7 +10,7 @@ export class ModuleMap {
   constructor(
     public args: URLSearchParams,
     public redirects: Record<string,string>,
-    public rootNode: DenoModule,
+    public rootNode: ModuleJson,
   ) {
     this.registryOpts = {
       mainModule: rootNode.specifier,
@@ -41,7 +41,7 @@ export class ModuleMap {
     return moduleInfo;
   }
 
-  addFile(url: string, info: DenoModule, data: DenoInfo) {
+  addFile(url: string, info: ModuleJson, data: ModuleGraphJson) {
     if (info.error != null) {
       const module = this.grabModFor(url, '#error');
       if (!module.errors) module.errors = [];
@@ -58,7 +58,7 @@ export class ModuleMap {
     }
 
     const module = this.grabModFor(url);
-    module.totalSize += info.size;
+    module.totalSize += info.size ?? 0;
     module.files.push({
       url: url,
       deps: depEdges,
@@ -176,7 +176,7 @@ export class ModuleMap {
 
 }
 
-export function processDenoInfo(data: DenoInfo, args?: URLSearchParams) {
+export function processDenoInfo(data: ModuleGraphJson, args?: URLSearchParams) {
   // TODO: when are there multiple roots?
   const roots = data.roots.map(x => data.redirects[x] || x);
   const rootNode = data.modules.find(x => roots.includes(x.specifier));
@@ -193,7 +193,7 @@ export function processDenoInfo(data: DenoInfo, args?: URLSearchParams) {
   return map;
 }
 
-export function computeDependencies(data: DenoInfo, args: URLSearchParams) {
+export function computeDependencies(data: ModuleGraphJson, args: URLSearchParams) {
   const map = processDenoInfo(data, args);
 
   // Allow output different levels of processing
@@ -218,7 +218,7 @@ export function computeDependencies(data: DenoInfo, args: URLSearchParams) {
 if (import.meta.main) {
   const rawData = new TextDecoder().decode(await Deno.readAll(Deno.stdin));
   if (rawData[0] !== '{') throw new Error(`Expected JSON from "deno info --json"`);
-  const data = JSON.parse(rawData) as DenoInfo;
+  const data = JSON.parse(rawData) as ModuleGraphJson;
 
   const args = new URLSearchParams(Deno.args[0]);
 

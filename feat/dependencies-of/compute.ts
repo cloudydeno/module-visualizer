@@ -1,5 +1,4 @@
-import { SubProcess } from "../../deps.ts";
-import { DenoInfo } from "../../lib/types.ts";
+import { ModuleGraphJson, SubProcess } from "../../deps.ts";
 import { computeDependencies } from "../../lib/module-map.ts";
 
 export async function computeGraph(
@@ -14,7 +13,7 @@ export async function computeGraph(
     env: { "NO_COLOR": "yas" },
     stdin: 'null',
     errorPrefix: /^error: /,
-  }).captureAllTextOutput()) as DenoInfo;
+  }).captureAllTextOutput()) as ModuleGraphJson;
 
   return computeDependencies(downloadData, args);
 }

@@ -9,47 +9,6 @@ export interface CodeModule {
   files: {
     url: string;
     deps: string[];
-    size: number;
+    size?: number;
   }[];
 };
-
-
-export interface DenoInfo {
-  roots:     string[];
-  modules:   DenoModule[];
-  redirects: Record<string,string>;
-}
-
-interface DenoModuleInfo {
-  size:         number;
-  mediaType:    DenoMediaType;
-  local:        string;
-  emit?:        string;
-  error:        undefined;
-}
-interface DenoModuleError {
-  error:        string;
-}
-export type DenoModule = {
-  specifier:        string;
-  dependencies?:    DenoDependency[];
-  typesDependency?: {
-    specifier:        string;
-    dependency:       { specifier: string }; // also the span
-  };
-} & (
-  | DenoModuleInfo
-  | DenoModuleError
-);
-
-export interface DenoDependency {
-  specifier: string;
-  code?:     { specifier: string }; // also the span
-  type?:     { specifier: string }; // also the span
-}
-
-export type DenoMediaType =
-| "TypeScript"
-| "JavaScript"
-| "Dts"
-;
