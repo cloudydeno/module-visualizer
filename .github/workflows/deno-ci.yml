@@ -47,7 +47,7 @@ jobs:
         restore-keys: deno-https/v1-
 
     - name: Check entrypoint
-      run: time deno cache --check=all server.ts
+      run: time deno check server.ts
 
     - name: Run any tests
       run: time deno test
