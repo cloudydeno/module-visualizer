@@ -19,4 +19,8 @@ export type {
   ModuleJson,
 } from "https://deno.land/x/deno_graph@0.43.2/lib/types.d.ts";
 
-export { trace, context, type Context } from "npm:@opentelemetry/api";
+export {
+  trace,
+  context,
+  type Context,
+} from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9eb9efdc12eecdd37e15165bb1875e152612cbbf/tracing/api.ts";

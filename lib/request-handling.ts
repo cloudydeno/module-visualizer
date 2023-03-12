@@ -8,7 +8,7 @@ export const TextHeaders = new Headers({
 });
 
 
-const tracer = trace.getTracer('html-templating');
+const tracer = trace.getTracer('web-handler');
 
 export function templateHtml(templatePath: string, replacements: Record<string,string> = {}) {
   return tracer.startActiveSpan(`Render ${templatePath}`, {
@@ -52,21 +52,23 @@ export async function serveTemplatedHtml(req: Request, templatePath: string, rep
 }
 
 export async function servePublic(req: Request, path: string) {
-  return await file_server
+  return await tracer.startActiveSpan('serve public', span => file_server
     .serveFile(req, 'public/'+path)
-    .catch(makeErrorResponse);
+    .finally(() => span.end())
+    .catch(makeErrorResponse));
 }
 
 export async function serveFont(req: Request, path: string) {
-  return await file_server
+  return await tracer.startActiveSpan('serve font', span => file_server
     .serveFile(req, 'fonts/'+path)
+    .finally(() => span.end())
     .then(resp => {
       if (resp.status === 200) {
         resp.headers?.set('cache-control', 'public, max-age=2592000'); // 30d
       }
       return resp;
     })
-    .catch(makeErrorResponse);
+    .catch(makeErrorResponse));
 }
 
 export function makeErrorResponse(err: Error): Response {

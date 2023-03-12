@@ -1,8 +1,8 @@
 #!/usr/bin/env -S deno run --watch --check --allow-sys=hostname --allow-read --allow-net --allow-run=deno,dot --allow-env
 
-import { Context, context, http } from "./deps.ts";
+import { http } from "./deps.ts";
 import { serveFont, servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
-import { asyncGeneratorWithContext, httpTracer, provider } from "./tracer.ts";
+import { httpTracer, provider } from "./tracer.ts";
 
 // The different HTTP surfaces we expose
 import * as DependenciesOf from './feat/dependencies-of/api.ts';
@@ -29,14 +29,12 @@ http.serve(httpTracer(provider, async request => {
 });
 
 async function handleReq(req: Request): Promise<Response | undefined> {
-  console.log(req.method, req.url);
-  const url = new URL(req.url, 'http://localhost');
-  const args = new URLSearchParams(url.search);
+  const url = new URL(req.url);
 
   { // feature: dependencies-of
     const match = url.pathname.match(/^\/dependencies-of\/(.*)$/);
     if (match && req.method === 'GET') {
-      return await DependenciesOf.handleRequest(req, match[1], args);
+      return await DependenciesOf.handleRequest(req, match[1], url.searchParams);
     }
   }
 
@@ -54,7 +52,7 @@ async function handleReq(req: Request): Promise<Response | undefined> {
   }
 
   if (url.pathname === '/') {
-    return serveTemplatedHtml(req, 'public/index.html');
+    return await serveTemplatedHtml(req, 'public/index.html');
   }
 
   if ([
@@ -62,11 +60,11 @@ async function handleReq(req: Request): Promise<Response | undefined> {
     '/icon-deps.png',
     '/interactive-graph.js',
   ].includes(url.pathname)) {
-    return servePublic(req, url.pathname);
+    return await servePublic(req, url.pathname);
   }
 
   if (url.pathname.startsWith('/fonts/') &&
       url.pathname.endsWith('.woff2')) {
-    return serveFont(req, url.pathname.slice(6));
+    return await serveFont(req, url.pathname.slice(6));
   }
 }
