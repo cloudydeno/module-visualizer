@@ -7,4 +7,4 @@ ADD deps.ts .
 RUN deno check deps.ts
 ADD . .
 RUN deno check server.ts
-ENTRYPOINT ["deno","run","--allow-env","--allow-net=0.0.0.0,api.github.com,cdn.deno.land,registry.npmjs.org","--allow-run=deno,dot","--allow-read=.","server.ts"]
+ENTRYPOINT ["deno","run","--allow-env","--allow-net","--allow-run=deno,dot","--allow-read=.","server.ts"]
