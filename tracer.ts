@@ -6,9 +6,12 @@ import {
   SubProcessInstrumentation,
   Resource,
   asyncGeneratorWithContext,
-} from "https://raw.githubusercontent.com/cloudydeno/deno-observability/7a96cf859631e81df821ef8c3352b92d7f909739/tracing/mod.ts";
-import { GcpBatchSpanExporter } from "https://raw.githubusercontent.com/cloudydeno/deno-observability/7a96cf859631e81df821ef8c3352b92d7f909739/tracing/exporters/google-cloud.ts";
-import { GoogleCloudPropagator } from "https://raw.githubusercontent.com/cloudydeno/deno-observability/7a96cf859631e81df821ef8c3352b92d7f909739/tracing/propagators/google-cloud.ts";
+// } from "../deno-observability/tracing/mod.ts";
+// import { GcpBatchSpanExporter } from "../deno-observability/tracing/exporters/google-cloud.ts";
+// import { GoogleCloudPropagator } from "../deno-observability/tracing/propagators/google-cloud.ts";
+} from "https://raw.githubusercontent.com/cloudydeno/deno-observability/4d6794577c18c3eb79318932d56888ae3567b60a/tracing/mod.ts";
+import { GcpBatchSpanExporter } from "https://raw.githubusercontent.com/cloudydeno/deno-observability/4d6794577c18c3eb79318932d56888ae3567b60a/tracing/exporters/google-cloud.ts";
+import { GoogleCloudPropagator } from "https://raw.githubusercontent.com/cloudydeno/deno-observability/4d6794577c18c3eb79318932d56888ae3567b60a/tracing/propagators/google-cloud.ts";
 
 export { httpTracer, asyncGeneratorWithContext };
 
