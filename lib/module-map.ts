@@ -2,6 +2,12 @@ import { filesize, ModuleGraphJson, ModuleJson } from "../deps.ts";
 import { CodeModule } from "./types.ts";
 import * as registries from "./module-registries.ts";
 
+// TODO: enable multiple ModuleMap modes
+// 1. 'per-file' graph, direct from `deno info` without collapsing
+// 2. 'pkg-overview' graph, built from per-file graph & collapses everything into their modules
+// 3. 'module-focus' graph, shows all files within one module + immediate upstream/downstreams (also emits as subgraphs)
+// per-file graphs are used as input when constructing the other graphs
+
 export class ModuleMap {
   modules = new Map<string,CodeModule>();
   mainModule: CodeModule;

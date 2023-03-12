@@ -1,4 +1,4 @@
-import { http, file_server } from "../deps.ts";
+import { http, file_server, trace, context } from "../deps.ts";
 
 export const HtmlHeaders = new Headers({
   'content-type': 'text/html; charset=utf-8',
@@ -7,7 +7,20 @@ export const TextHeaders = new Headers({
   'content-type': 'text/text; charset=utf-8',
 });
 
-export async function templateHtml(templatePath: string, replacements: Record<string,string> = {}) {
+
+const tracer = trace.getTracer('html-templating');
+
+export function templateHtml(templatePath: string, replacements: Record<string,string> = {}) {
+  return tracer.startActiveSpan(`Render ${templatePath}`, {
+    attributes: {
+      'template_path': templatePath,
+    },
+  }, span =>
+    templateHtmlInner(templatePath, replacements)
+      .finally(() => span.end()));
+}
+
+async function templateHtmlInner(templatePath: string, replacements: Record<string,string> = {}) {
   const [
     template,
     globals,

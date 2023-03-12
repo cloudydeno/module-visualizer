@@ -4,13 +4,18 @@ import {
   readableStreamFromIterable,
   SubProcess,
   type SubprocessErrorData,
+  trace,
+  context,
+  Context,
 } from "../../deps.ts";
 
 import { templateHtml, makeErrorResponse, HtmlHeaders } from '../../lib/request-handling.ts';
 import { findModuleSlug, resolveModuleUrl } from "../../lib/resolve.ts";
 import { computeGraph, renderGraph } from "./compute.ts";
 
-export async function *handleRequest(req: Request, modSlug: string, args: URLSearchParams) {
+const tracer = trace.getTracer('dependencies-of-api');
+
+export async function handleRequest(req: Request, modSlug: string, args: URLSearchParams) {
   if (modSlug == '') {
     const url = args.get('url');
     if (!url) return;
@@ -26,7 +31,7 @@ export async function *handleRequest(req: Request, modSlug: string, args: URLSea
 
     const slug = await findModuleSlug(url);
     const location = slug + (args.toString() ? `?${args}` : '');
-    yield new Response(`302: ${location}`, {
+    return new Response(`302: ${location}`, {
       status: 302,
       headers: { location },
     });
@@ -37,17 +42,13 @@ export async function *handleRequest(req: Request, modSlug: string, args: URLSea
 
   switch (args.get('format')) {
     case 'json':
-      yield serveBufferedOutput(req, computeGraph(modUrl, args), 'application/json');
-      return;
+      return await serveBufferedOutput(req, computeGraph(modUrl, args), 'application/json');
     case 'dot':
-      yield serveBufferedOutput(req, computeGraph(modUrl, args), 'text/plain; charset=utf-8');
-      return;
+      return await serveBufferedOutput(req, computeGraph(modUrl, args), 'text/plain; charset=utf-8');
     case 'svg':
-      yield serveStreamingOutput(req, renderGraph(modUrl, ["-Tsvg"], args), 'image/svg+xml');
-      return;
+      return await serveStreamingOutput(req, renderGraph(modUrl, ["-Tsvg"], args), 'image/svg+xml');
     case null:
-      yield serveHtmlGraphPage(req, modUrl, modSlug, args);
-      return;
+      return await serveHtmlGraphPage(req, modUrl, modSlug, args);
   }
 }
 
@@ -75,56 +76,40 @@ async function serveStreamingOutput(req: Request, computation: Promise<SubProces
 
 const hideLoadMsg = `<style type="text/css">#graph-waiting { display: none; }</style>`;
 
-async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string, args: URLSearchParams) {
-  args.set('font', 'Archivo Narrow');
-
-  // Render the basic page first, so we can error more cleanly if that fails
-  let pageHtml = '';
+async function renderModuleToHtml(modUrl: string, args: URLSearchParams) {
   try {
-    pageHtml = await templateHtml('feat/dependencies-of/public.html', {
-      module_slug: entities.encode(modSlug),
-      module_url: entities.encode(modUrl),
-      export_prefix: entities.encode(`${req.url}${req.url.includes('?') ? '&' : '?'}format=`),
-    });
+
+    if (args.get('renderer') === 'interactive') {
+      const data = await computeGraph(modUrl, args, 'dot');
+      return `
+        <div id="graph"></div>
+        <script type="text/javascript" src="https://unpkg.com/vis-network@9.0.1/standalone/umd/vis-network.min.js"></script>
+        <script type="text/javascript" src="/interactive-graph.js"></script>
+        <template type="text/plain" id="graphviz_data">\n${data
+          .replace(/&/g, '&amp;')
+          .replace(/>/g, '&gt;')
+          .replace(/</g, '&lt;')
+        }</template>
+        <script type="text/javascript">
+        window.CreateModuleGraph(document.getElementById('graphviz_data').innerHTML
+          .replace(/&gt;/g, '>')
+          .replace(/&lt;/g, '<')
+          .replace(/&amp;/g, '&'));
+        </script>
+        `.replace(/^ {8}/gm, '');
+    }
+
+    const dotProc = await renderGraph(modUrl, ["-Tsvg"], args);
+    const raw = await dotProc.captureAllOutput();
+    const fullSvg = new TextDecoder().decode(raw);
+    const attrs = [`id="graph"`];
+    const svgWidth = fullSvg.match(/viewBox="(?:([0-9.-]+) ){3}/)?.[1];
+    if (svgWidth) attrs.push(`style="max-width: ${parseInt(svgWidth)*2}px;"`);
+    return fullSvg
+      .slice(fullSvg.indexOf('<!--'))
+      .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg '+attrs.join(' '));
+
   } catch (err) {
-    return makeErrorResponse(err);
-  }
-
-  const graphPromise = ((args.get('renderer') === 'interactive')
-
-  ? computeGraph(modUrl, args, 'dot')
-      .then(data => {
-        return `
-          <div id="graph"></div>
-          <script type="text/javascript" src="https://unpkg.com/vis-network@9.0.1/standalone/umd/vis-network.min.js"></script>
-          <script type="text/javascript" src="/interactive-graph.js"></script>
-          <template type="text/plain" id="graphviz_data">\n${data
-            .replace(/&/g, '&amp;')
-            .replace(/>/g, '&gt;')
-            .replace(/</g, '&lt;')
-          }</template>
-          <script type="text/javascript">
-          window.CreateModuleGraph(document.getElementById('graphviz_data').innerHTML
-            .replace(/&gt;/g, '>')
-            .replace(/&lt;/g, '<')
-            .replace(/&amp;/g, '&'));
-          </script>
-          `.replace(/^ {10}/gm, '');
-      })
-
-  : renderGraph(modUrl, ["-Tsvg"], args)
-      .then(dotProc => dotProc.captureAllOutput())
-      .then(raw => {
-        const fullSvg = new TextDecoder().decode(raw);
-        const attrs = [`id="graph"`];
-        const svgWidth = fullSvg.match(/viewBox="(?:([0-9.-]+) ){3}/)?.[1];
-        if (svgWidth) attrs.push(`style="max-width: ${parseInt(svgWidth)*2}px;"`);
-        return fullSvg
-          .slice(fullSvg.indexOf('<!--'))
-          .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg '+attrs.join(' '));
-      })
-
-  ).catch(err => {
     if (err.subproc) {
       const info = err.subproc as SubprocessErrorData;
       return `
@@ -140,7 +125,30 @@ async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string,
     }
     console.error('Graph computation error:', err.stack);
     return `<div id="graph-error">${entities.encode(err.stack)}</div>`;
-  });
+  }
+}
+
+async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string, args: URLSearchParams) {
+  args.set('font', 'Archivo Narrow');
+
+  // Render the basic page first, so we can error more cleanly if that fails
+  let pageHtml = '';
+  try {
+    pageHtml = await templateHtml('feat/dependencies-of/public.html', {
+      module_slug: entities.encode(modSlug),
+      module_url: entities.encode(modUrl),
+      export_prefix: entities.encode(`${req.url}${req.url.includes('?') ? '&' : '?'}format=`),
+    });
+  } catch (err) {
+    return makeErrorResponse(err);
+  }
+
+  const graphPromise = tracer.startActiveSpan('Compute + Render Graph', {
+    attributes: {
+      'render.mod_url': modUrl,
+      'render.params': args.toString(),
+    },
+  }, context.active(), span => renderModuleToHtml(modUrl, args).finally(() => span.end()));
 
   // Return the body in two parts, with a comment in between
   return new Response(readableStreamFromIterable((async function*() {

@@ -18,3 +18,5 @@ export type {
   ModuleGraphJson,
   ModuleJson,
 } from "https://deno.land/x/deno_graph@0.43.2/lib/types.d.ts";
+
+export { trace, context, type Context } from "npm:@opentelemetry/api";

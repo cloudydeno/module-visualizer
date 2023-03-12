@@ -6,43 +6,39 @@ import { resolveModuleUrl } from "../../lib/resolve.ts";
 import { processDenoInfo, ModuleMap } from "../../lib/module-map.ts";
 import { determineModuleAttrs } from "../../lib/module-registries.ts";
 
-export async function *handleRequest(req: Request, shieldId: string, modSlug: string) {
+export async function handleRequest(req: Request, shieldId: string, modSlug: string) {
   const modUrl = await resolveModuleUrl(modSlug);
   if (!modUrl) return;
   switch (shieldId) {
 
     case 'dep-count':
-      yield computeGraph(modUrl)
+      return await computeGraph(modUrl)
         .then(makeDepCountShield)
         .catch(makeErrorShield);
-      return;
 
     case 'updates':
-      yield computeGraph(modUrl)
+      return await computeGraph(modUrl)
         .then(makeUpdatesShield)
         .catch(makeErrorShield);
-      return;
 
     case 'cache-size':
-      yield computeGraph(modUrl)
+      return await computeGraph(modUrl)
         .then(makeCacheSizeShield)
         .catch(makeErrorShield);
-      return;
 
     case 'latest-version':
       if (modSlug.startsWith('x/')) {
-        yield makeXLatestVersionShield(modSlug.split('/')[1].split('@')[0])
+        return await makeXLatestVersionShield(modSlug.split('/')[1].split('@')[0])
           .catch(makeErrorShield);
       }
       return;
 
     case 'setup':
-      yield serveTemplatedHtml(req, 'feat/shields/public.html', {
+      return await serveTemplatedHtml(req, 'feat/shields/public.html', {
         module_slug: entities.encode(modSlug),
         module_url: entities.encode(modUrl),
         module_slug_component: encodeURIComponent(modSlug),
       });
-      return;
   }
 }
 
