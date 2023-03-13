@@ -13,7 +13,7 @@ import { templateHtml, makeErrorResponse, HtmlHeaders } from '../../lib/request-
 import { findModuleSlug, resolveModuleUrl } from "../../lib/resolve.ts";
 import { computeGraph, renderGraph } from "./compute.ts";
 
-const tracer = trace.getTracer('dependencies-of-api');
+const tracer = trace.getTracer('dependencies-of');
 
 export async function handleRequest(req: Request, modSlug: string, args: URLSearchParams) {
   if (modSlug == '') {

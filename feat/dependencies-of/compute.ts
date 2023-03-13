@@ -1,5 +1,7 @@
-import { ModuleGraphJson, SubProcess } from "../../deps.ts";
+import { ModuleGraphJson, SubProcess, trace } from "../../deps.ts";
 import { computeDependencies } from "../../lib/module-map.ts";
+
+const tracer = trace.getTracer('dependencies-of')
 
 export async function computeGraph(
   modUrl: string,
@@ -15,7 +17,13 @@ export async function computeGraph(
     errorPrefix: /^error: /,
   }).captureAllTextOutput()) as ModuleGraphJson;
 
-  return computeDependencies(downloadData, args);
+  return tracer.startActiveSpan('Emit', span => {
+    try {
+      return computeDependencies(downloadData, args);
+    } finally {
+      span.end();
+    }
+  });
 }
 
 export async function renderGraph(modUrl: string, dotArgs: string[], args: URLSearchParams) {
