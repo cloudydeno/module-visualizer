@@ -23,4 +23,4 @@ export {
   trace,
   context,
   type Context,
-} from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9eb9efdc12eecdd37e15165bb1875e152612cbbf/tracing/api.ts";
+} from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9d996d1ce0ba6b15641cbc882b15fc63992418b9/tracing/api.ts";

@@ -8,9 +8,9 @@ import {
 // } from "../deno-observability/tracing/mod.ts";
 // import { GcpBatchSpanExporter } from "../deno-observability/tracing/exporters/google-cloud.ts";
 // import { GoogleCloudPropagator } from "../deno-observability/tracing/propagators/google-cloud.ts";
-} from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9eb9efdc12eecdd37e15165bb1875e152612cbbf/tracing/mod.ts";
-import { GcpBatchSpanExporter } from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9eb9efdc12eecdd37e15165bb1875e152612cbbf/tracing/exporters/google-cloud.ts";
-import { GoogleCloudPropagator } from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9eb9efdc12eecdd37e15165bb1875e152612cbbf/tracing/propagators/google-cloud.ts";
+} from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9d996d1ce0ba6b15641cbc882b15fc63992418b9/tracing/mod.ts";
+import { GcpBatchSpanExporter } from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9d996d1ce0ba6b15641cbc882b15fc63992418b9/tracing/exporters/google-cloud.ts";
+import { GoogleCloudPropagator } from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9d996d1ce0ba6b15641cbc882b15fc63992418b9/tracing/propagators/google-cloud.ts";
 
 export { httpTracer };
 
