@@ -1,24 +1,11 @@
-import {
-  DenoTracerProvider,
-  OTLPTraceFetchExporter,
-  httpTracer,
-  DenoFetchInstrumentation,
-  SubProcessInstrumentation,
-  Resource,
-// } from "../deno-observability/tracing/mod.ts";
-// import { GcpBatchSpanExporter } from "../deno-observability/tracing/exporters/google-cloud.ts";
-// import { GoogleCloudPropagator } from "../deno-observability/tracing/propagators/google-cloud.ts";
-} from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9d996d1ce0ba6b15641cbc882b15fc63992418b9/tracing/mod.ts";
-import { GcpBatchSpanExporter } from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9d996d1ce0ba6b15641cbc882b15fc63992418b9/tracing/exporters/google-cloud.ts";
-import { GoogleCloudPropagator } from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9d996d1ce0ba6b15641cbc882b15fc63992418b9/tracing/propagators/google-cloud.ts";
-
+import { httpTracer, DenoFetchInstrumentation, DenoTracerProvider, OTLPTraceFetchExporter, Resource, SubProcessInstrumentation } from "https://deno.land/x/observability@v0.2.0/tracing/mod.ts";
+import { GoogleCloudPropagator } from "https://deno.land/x/observability@v0.2.0/tracing/propagators/google-cloud.ts";
 export { httpTracer };
 
 export const provider = new DenoTracerProvider({
   resource: new Resource({
     'service.name': 'module-visualizer',
-    'service.version': 'adhoc',
-    'deployment.environment': 'local',
+    'deployment.environment': 'production',
   }),
   propagator: new GoogleCloudPropagator(),
   instrumentations: [
@@ -26,7 +13,6 @@ export const provider = new DenoTracerProvider({
     new SubProcessInstrumentation(),
   ],
   batchSpanProcessors: [
-    new GcpBatchSpanExporter(),
-    // new OTLPTraceFetchExporter(),
+    new OTLPTraceFetchExporter(),
   ],
 });
