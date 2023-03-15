@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --watch --check --allow-sys=hostname --allow-read --allow-net --allow-run=deno,dot --allow-env
 
-import { http } from "./deps.ts";
+import { http, trace } from "./deps.ts";
 import { serveFont, servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
 import { httpTracer, provider } from "./tracer.ts";
 
@@ -34,6 +34,7 @@ async function handleReq(req: Request): Promise<Response | undefined> {
   { // feature: dependencies-of
     const match = url.pathname.match(/^\/dependencies-of\/(.*)$/);
     if (match && req.method === 'GET') {
+      trace.getActiveSpan()?.setAttribute('http.route', 'dependencies-of');
       return await DependenciesOf.handleRequest(req, match[1], url.searchParams);
     }
   }
@@ -41,17 +42,20 @@ async function handleReq(req: Request): Promise<Response | undefined> {
   { // feature: shields
     const match = url.pathname.match(/^\/shields\/([^\/]+)\/(.+)$/);
     if (match && req.method === 'GET') {
+      trace.getActiveSpan()?.setAttribute('http.route', 'shield.'+match[1]);
       return await Shields.handleRequest(req, match[1], match[2]);
     }
   }
 
   { // feature: registry-key
     if (url.pathname === '/registry-key' && req.method === 'GET') {
+      trace.getActiveSpan()?.setAttribute('http.route', 'registry-key');
       return await RegistryKey.handleRequest(req);
     }
   }
 
   if (url.pathname === '/') {
+    trace.getActiveSpan()?.setAttribute('http.route', '/');
     return await serveTemplatedHtml(req, 'public/index.html');
   }
 
@@ -60,11 +64,13 @@ async function handleReq(req: Request): Promise<Response | undefined> {
     '/icon-deps.png',
     '/interactive-graph.js',
   ].includes(url.pathname)) {
+    trace.getActiveSpan()?.setAttribute('http.route', 'public');
     return await servePublic(req, url.pathname);
   }
 
   if (url.pathname.startsWith('/fonts/') &&
       url.pathname.endsWith('.woff2')) {
+    trace.getActiveSpan()?.setAttribute('http.route', 'fonts');
     return await serveFont(req, url.pathname.slice(6));
   }
 }
