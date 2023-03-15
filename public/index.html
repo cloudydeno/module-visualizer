@@ -9,29 +9,36 @@
 <section>
   <h2>Changelog</h2>
   <p>
+    <strong>15 March 2023</strong>:
+    Upgraded service to Deno 1.31. Updated homepage examples.
+  </p>
+  <p>
     <strong>12 Febuary 2023</strong>:
     Upgraded service to Deno 1.30.
   </p>
-  <p>
-    <strong>11 July 2022</strong>:
-    Upgraded service to Deno 1.23. Added changelog.
-  </p>
-  <p>
-    <strong>25 January 2022</strong>:
-    Capped the maximum zoom level to make small graphs less silly in full-screen.
-  </p>
-  <p>
-    <strong>8 December 2021</strong>:
-    Upgraded service to Deno 1.16 to improve graph edges during redirection.
-  </p>
-  <p>
-    <strong>4 September 2021</strong>:
-    Set up browser caching for static assets. Fixed a CSS serving regression.
-  </p>
-  <p>
-    <strong>28 August 2021</strong>:
-    Upgraded service to Deno 1.13. Introduced a CSS serving regression.
-  </p>
+  <details>
+    <summary>Older releases</summary>
+    <p>
+      <strong>11 July 2022</strong>:
+      Upgraded service to Deno 1.23. Added changelog.
+    </p>
+    <p>
+      <strong>25 January 2022</strong>:
+      Capped the maximum zoom level to make small graphs less silly in full-screen.
+    </p>
+    <p>
+      <strong>8 December 2021</strong>:
+      Upgraded service to Deno 1.16 to improve graph edges during redirection.
+    </p>
+    <p>
+      <strong>4 September 2021</strong>:
+      Set up browser caching for static assets. Fixed a CSS serving regression.
+    </p>
+    <p>
+      <strong>28 August 2021</strong>:
+      Upgraded service to Deno 1.13. Introduced a CSS serving regression.
+    </p>
+  </details>
 </section>
 
 <section>
@@ -59,23 +66,17 @@
 
   <p>Just browsing? Here's a few interesting modules:</p>
   <ul>
-    <li><a href="/dependencies-of/https/raw.githubusercontent.com/cloudydeno/module-visualizer/main/server.ts?rankdir=LR">raw.githubusercontent.com/cloudydeno/module-visualizer/main/server.ts</a> (this website!)</li>
-    <li><a href="/dependencies-of/https/deno.land/x/djwt@v2.1/mod.ts?rankdir=LR">deno.land/x/djwt@v2.1/mod.ts</a> (denopkg oriented)</li>
-    <li><a href="/dependencies-of/https/deno.land/x/webview@0.5.5/mod.ts?rankdir=LR">deno.land/x/webview@0.5.5/mod.ts</a> (quite clean)</li>
-    <li><a href="/dependencies-of/https/deno.land/x/puppeteer@5.5.1/mod.ts">deno.land/x/puppeteer@5.5.1/mod.ts</a> (jspm)</li>
-    <li><a href="/dependencies-of/https/deno.land/x/oak@v6.5.0/mod.ts">deno.land/x/oak@v6.5.0/mod.ts</a></li>
-    <li><a href="/dependencies-of/https/deno.land/x/drollup@2.38.1+0.7.4/mod.ts?std=combined">deno.land/x/drollup@2.38.1+0.7.4/mod.ts</a> with /std/ combined (default)</li>
-    <li><a href="/dependencies-of/https/deno.land/x/drollup@2.38.1+0.7.4/mod.ts?std=isolate">deno.land/x/drollup@2.38.1+0.7.4/mod.ts</a> with each /std/ subfolder broken out</li>
-    <li><a href="/dependencies-of/https/deno.land/x/aws_sdk@v3.4.1.1/client-cloudfront/mod.ts">deno.land/x/aws_sdk@v3.4.1.1/client-cloudfront/mod.ts</a></li>
-    <li><a href="/dependencies-of/https/deno.land/x/postgres@v0.7.0/mod.ts">deno.land/x/postgres@v0.7.0/mod.ts</a> (only uses std)</li>
-    <li><a href="/dependencies-of/https/deno.land/x/aleph@v0.2.28/cli.ts">deno.land/x/aleph@v0.2.28/cli.ts</a></li>
-    <li><a href="/dependencies-of/https/deno.land/x/aws_api@v0.2.1/demo.ts">deno.land/x/aws_api@v0.2.1/demo.ts</a></li>
-    <li><a href="/dependencies-of/https/deno.land/x/vno@v1.0.5/install/vno.ts">deno.land/x/vno@v1.0.5/install/vno.ts</a> (huge!)</li>
-    <li><a href="/dependencies-of/https/deno.land/x/superdeno@3.0.0/mod.ts">deno.land/x/superdeno@3.0.0/mod.ts</a> (big)</li>
-    <li><a href="/dependencies-of/https/deno.land/x/drash@v1.4.1/tests/members.ts">deno.land/x/drash@v1.4.1/tests/members.ts</a></li>
-    <li><a href="/dependencies-of/https/deno.land/x/mandarinets@v2.3.2/mod.ts?rankdir=LR">deno.land/x/mandarinets@v2.3.2/mod.ts</a></li>
-    <li><a href="/dependencies-of/https/raw.githubusercontent.com/stardustapp/standard-apps/master/publishing/blog-manager/routines/publish-blog.ts">raw.githubusercontent.com/stardustapp/standard-apps/master/publishing/blog-manager/routines/publish-blog.ts</a> (custom registries)</li>
-    <li><a href="/dependencies-of/https/raw.githubusercontent.com/danopia/kubernetes-dns-sync/main/controller/mod.ts?rankdir=LR">raw.githubusercontent.com/danopia/kubernetes-dns-sync/main/controller/mod.ts</a></li>
+    <li><a href="/dependencies-of/https/raw.githubusercontent.com/cloudydeno/module-visualizer/main/server.ts?rankdir=LR">raw.githubusercontent.com/cloudydeno/module-visualizer/main/server.ts</a> (this website!, minimal)</li>
+    <li><a href="/dependencies-of/x/webview@0.7.5/mod.ts?rankdir=LR">deno.land/x/webview@0.7.5/mod.ts</a> (minimal)</li>
+    <li><a href="/dependencies-of/x/puppeteer@16.2.0/mod.ts">deno.land/x/puppeteer@16.2.0/mod.ts</a> (uses NPM packages via esm.sh)</li>
+    <li><a href="/dependencies-of/x/drollup@2.58.0+0.20.0/mod.ts">deno.land/x/drollup@2.58.0+0.20.0/mod.ts</a></li>
+    <li><a href="/dependencies-of/x/postgres@v0.17.0/mod.ts">deno.land/x/postgres@v0.17.0/mod.ts</a> (only uses std)</li>
+    <li><a href="/dependencies-of/x/aleph@1.0.0-beta.38/dev.ts">deno.land/x/aleph@1.0.0-beta.38/dev.ts</a></li>
+    <li><a href="/dependencies-of/x/aws_api@v0.8.1/demo.ts">deno.land/x/aws_api@v0.8.1/demo.ts</a></li>
+    <li><a href="/dependencies-of/x/aws_sdk@v3.32.0-1/client-cloudfront/mod.ts">deno.land/x/aws_sdk@v3.32.0-1/client-cloudfront/mod.ts</a></li>
+    <li><a href="/dependencies-of/x/vno@1.5.1/install/vno.ts?rankdir=LR">deno.land/x/vno@1.5.1/install/vno.ts</a> (lots of dependencies - jspm, esm, skypack)</li>
+    <li><a href="/dependencies-of/x/superdeno@4.8.0/mod.ts">deno.land/x/superdeno@4.8.0/mod.ts</a> (uses jspm packages)</li>
+    <li><a href="/dependencies-of/https/raw.githubusercontent.com/cloudydeno/kubernetes-dns-sync/main/src/main.ts?rankdir=LR">raw.githubusercontent.com/cloudydeno/kubernetes-dns-sync/main/src/main.ts</a></li>
     <!-- <li><a href="/dependencies-of/https/example">example</a></li> -->
   </ul>
 </section>
@@ -96,7 +97,6 @@
   <ul>
     <li>Snippit: Tim Holman's <a target="_blank" href="https://tholman.com/github-corners/">Github Corner</a> HTML/SVG/CSS</li>
     <li>Font: Omnibus-Type's <a target="_blank" href="https://github.com/Omnibus-Type/ArchivoNarrow">Archivo Narrow</a> for fitting long strings into a visualization</li>
-    <li>CDN: <a target="_blank" href="https://fonts.google.com/">Google Fonts</a> for webfont serving</li>
     <li>Icon: Based on <a target="_blank" href="https://thenounproject.com/term/graph-databases/1631008/">Graph Databases</a> by H Alberto Gongora from the <em>Noun Project</em></li>
   </ul>
   <p>
