@@ -5,7 +5,7 @@ export { httpTracer };
 export const provider = new DenoTracerProvider({
   resource: new Resource({
     'service.name': 'module-visualizer',
-    'service.version': Deno.env.get('K_REVISION'),
+    'service.version': Deno.env.get('K_REVISION')?.slice((Deno.env.get('K_SERVICE')?.length ?? -1)+1),
     'deployment.environment': 'production',
   }),
   propagator: new GoogleCloudPropagator(),
