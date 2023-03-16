@@ -17,7 +17,7 @@ try {
 }
 
 console.log('Setting up on', { port });
-http.serve(httpTracer(provider, async request => {
+http.serve(httpTracer(async request => {
 
   const resp = await handleReq(request);
   return resp ?? new Response('404 Not Found', {
