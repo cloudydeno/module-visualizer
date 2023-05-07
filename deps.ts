@@ -23,4 +23,7 @@ export {
   trace,
   context,
   type Context,
-} from "https://raw.githubusercontent.com/cloudydeno/deno-observability/9d996d1ce0ba6b15641cbc882b15fc63992418b9/tracing/api.ts";
+} from "https://deno.land/x/observability@v0.4.0/opentelemetry/api.js";
+export {
+  httpTracer,
+} from "https://deno.land/x/observability@v0.4.0/instrumentation/http-server.ts";

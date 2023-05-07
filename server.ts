@@ -1,8 +1,7 @@
 #!/usr/bin/env -S deno run --watch --check --allow-sys=hostname --allow-read --allow-net --allow-run=deno,dot --allow-env
 
-import { http, trace } from "./deps.ts";
+import { http, httpTracer, trace } from "./deps.ts";
 import { serveFont, servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
-import { httpTracer, provider } from "./tracer.ts";
 
 // The different HTTP surfaces we expose
 import * as DependenciesOf from './feat/dependencies-of/api.ts';
