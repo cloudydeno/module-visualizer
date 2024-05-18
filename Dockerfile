@@ -8,4 +8,4 @@ ADD deps.ts .
 RUN deno check deps.ts
 ADD . .
 RUN deno check entrypoint.ts
-ENTRYPOINT ["deno","run","--allow-sys=hostname","--allow-env","--allow-net","--allow-run=deno,dot","--allow-read=.","entrypoint.ts"]
+ENTRYPOINT ["deno","run","--allow-sys=hostname,osRelease","--allow-env","--allow-net","--allow-run=deno,dot","--allow-read=.","entrypoint.ts"]
