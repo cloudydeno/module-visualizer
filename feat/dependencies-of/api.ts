@@ -152,6 +152,12 @@ async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string,
 
     yield pageHtml;
 
+    // Deno's response compression buffers our loading message
+    // Instead of defeating compression, we send a few bytes of junk.
+    for (let i = 0; i < 16; i++) {
+      yield new Array(1024).fill(' ').join('');
+    }
+
     yield "\n<!-- now waiting for graph ... ";
     const d0 = Date.now();
     const graphText = hideLoadMsg + await graphPromise;
