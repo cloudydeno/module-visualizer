@@ -31,7 +31,7 @@ jobs:
     # We're more selective here to prevent cross-branch contamination
     # Disabled for now because https://github.com/denoland/deno/pull/12830
     # - name: Cache file://
-    #   uses: actions/cache@v2
+    #   uses: actions/cache@v4
     #   with:
     #     path: ~/.cache/deno/gen/file
     #     key: deno/${{ matrix.deno-version }}-file/v1-${{ github.ref }}-${{ github.sha }}
@@ -40,7 +40,7 @@ jobs:
     # "https" cache: code from the Internet
     # External sources won't change much so we use less precise keys
     - name: Cache https://
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.cache/deno/deps/https
         key: deno-https/v1-${{ hashFiles('**/deps.ts') }}
