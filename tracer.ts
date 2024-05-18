@@ -1,7 +1,7 @@
 // TODO: this could be added to /x/observability as a preconfigured SDK
 
-import { DenoTelemetrySdk } from "https://deno.land/x/observability@v0.4.0/sdk.ts";
-import { CloudPropagator } from "https://deno.land/x/observability@v0.4.0/otel-platform/propagators/google-cloud.ts";
+import { DenoTelemetrySdk } from "https://deno.land/x/observability@v0.6.1/sdk.ts";
+import { CloudPropagator } from "https://deno.land/x/observability@v0.6.1/otel-platform/propagators/google-cloud.ts";
 
 new DenoTelemetrySdk({
   resourceAttrs: {
