@@ -20,7 +20,7 @@ jobs:
 
     steps:
     - name: Checkout source
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Use Deno ${{ matrix.deno-version }}
       uses: denoland/setup-deno@v1
@@ -61,7 +61,7 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Log into GitHub Container Registry
         uses: docker/login-action@v2
