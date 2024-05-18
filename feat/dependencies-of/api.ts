@@ -149,17 +149,18 @@ async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string,
 
   // Return the body in two parts, with a comment in between
   return new Response(ReadableStream.from((async function*() {
-    const encoder = new TextEncoder();
-    yield encoder.encode(pageHtml);
 
-    yield encoder.encode("\n<!-- now waiting for graph ... ");
+    yield pageHtml;
+
+    yield "\n<!-- now waiting for graph ... ";
     const d0 = Date.now();
     const graphText = hideLoadMsg + await graphPromise;
     const millis = Date.now() - d0;
-    yield encoder.encode(`completed in ${millis}ms -->\n\n`);
+    yield `completed in ${millis}ms -->\n\n`;
 
-    yield encoder.encode(graphText);
-  }())), {
+    yield graphText;
+
+  }())).pipeThrough(new TextEncoderStream()), {
     headers: HtmlHeaders,
   });
 }
