@@ -17,7 +17,7 @@ export { filesize } from "https://crux.land/6wZ5Sz#filesize@v1";
 export type {
   ModuleGraphJson,
   ModuleJson,
-} from "https://deno.land/x/deno_graph@0.43.2/lib/types.d.ts";
+} from "https://deno.land/x/deno_graph@0.69.6/types.ts";
 
 export {
   trace,
