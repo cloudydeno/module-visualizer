@@ -128,7 +128,7 @@ jobs:
 
     steps:
       - name: Log in
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
