@@ -80,7 +80,8 @@ export function determineModuleBase(fullUrl: string, opts: RegistryOpts): string
     const verIdx = parts.findIndex(x => x.includes('@'))
     return parts.slice(0, verIdx+1).join('/');
   }
-  return fullUrl;
+  // If we really don't recognize anything in the URL, we just cut it off arbitrarily
+  return parts.slice(0, 4).join('/');
 }
 
 export function determineModuleLabel(module: CodeModule, opts: RegistryOpts): string[] {
