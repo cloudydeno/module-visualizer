@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --watch --check --allow-sys=hostname --allow-read --allow-net --allow-run=deno,dot --allow-env
 
-import { http, httpTracer, trace } from "./deps.ts";
+import { httpTracer, trace } from "./deps.ts";
 import { serveFont, servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
 
 // The different HTTP surfaces we expose
@@ -16,16 +16,16 @@ try {
 }
 
 console.log('Setting up on', { port });
-http.serve(httpTracer(async request => {
+Deno.serve({
+  port,
+}, httpTracer(async request => {
 
   const resp = await handleReq(request);
   return resp ?? new Response('404 Not Found', {
     status: 404,
   });
 
-}), {
-  port,
-});
+}));
 
 async function handleReq(req: Request): Promise<Response | undefined> {
   const url = new URL(req.url);

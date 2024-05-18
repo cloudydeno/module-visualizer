@@ -1,4 +1,4 @@
-import { http, file_server, trace, context } from "../deps.ts";
+import { file_server, trace } from "../deps.ts";
 
 export const HtmlHeaders = new Headers({
   'content-type': 'text/html; charset=utf-8',
@@ -43,7 +43,7 @@ async function templateHtmlInner(templatePath: string, replacements: Record<stri
   });
 }
 
-export async function serveTemplatedHtml(req: Request, templatePath: string, replacements: Record<string,string> = {}) {
+export async function serveTemplatedHtml(_req: Request, templatePath: string, replacements: Record<string,string> = {}) {
   return await templateHtml(templatePath, replacements)
     .then(body => new Response(body, {
       headers: HtmlHeaders,

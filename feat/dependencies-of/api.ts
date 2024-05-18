@@ -1,12 +1,9 @@
 import {
   entities,
-  readableStreamFromReader,
-  readableStreamFromIterable,
   SubProcess,
   type SubprocessErrorData,
   trace,
   context,
-  Context,
 } from "../../deps.ts";
 
 import { templateHtml, makeErrorResponse, HtmlHeaders } from '../../lib/request-handling.ts';
@@ -52,7 +49,7 @@ export async function handleRequest(req: Request, modSlug: string, args: URLSear
   }
 }
 
-async function serveBufferedOutput(req: Request, computation: Promise<string>, contentType: string) {
+async function serveBufferedOutput(_req: Request, computation: Promise<string>, contentType: string) {
   return await computation
     .then(buffer => new Response(buffer, {
       status: 200,
@@ -62,11 +59,11 @@ async function serveBufferedOutput(req: Request, computation: Promise<string>, c
     }), makeErrorResponse);
 }
 
-async function serveStreamingOutput(req: Request, computation: Promise<SubProcess>, contentType: string) {
+async function serveStreamingOutput(_req: Request, computation: Promise<SubProcess>, contentType: string) {
   return await computation
     .then(proc => {
       proc.status(); // throw this away because not really a way of reporting problems mid-stream
-      return new Response(readableStreamFromReader(proc.proc.stdout), {
+      return new Response(proc.proc.stdout, {
         status: 200,
         headers: {
           'content-type': contentType,
@@ -151,7 +148,7 @@ async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string,
   }, context.active(), span => renderModuleToHtml(modUrl, args).finally(() => span.end()));
 
   // Return the body in two parts, with a comment in between
-  return new Response(readableStreamFromIterable((async function*() {
+  return new Response(ReadableStream.from((async function*() {
     const encoder = new TextEncoder();
     yield encoder.encode(pageHtml);
 

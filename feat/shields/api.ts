@@ -222,7 +222,7 @@ function makeCacheSizeShield(map: ModuleMap): Response {
 }
 
 async function makeXLatestVersionShield(modId: string): Promise<Response> {
-  const {latest, versions} = await fetch(`https://cdn.deno.land/${modId}/meta/versions.json`).then(x => x.json()) as {latest: string, versions: string[]};
+  const {latest} = await fetch(`https://cdn.deno.land/${modId}/meta/versions.json`).then(x => x.json()) as {latest: string, versions: string[]};
 
   return new Response(JSON.stringify({
     schemaVersion: 1,
