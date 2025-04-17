@@ -17,6 +17,8 @@ export function determineModuleBase(fullUrl: string, opts: RegistryOpts): string
     case 'cdn.deno.land':
       if (parts[3] === 'std' && opts.isolateStd) return parts.slice(0, 8).join('/');
       return parts.slice(0, 6).join('/');
+    case 'jsr.io':
+      return `${parts.slice(0, 5).join('/')}@${parts[5]}`;
     case 'crux.land':
       if (parts.length == 4) return `${url.origin}/${parts[3]}`;
       return `${url.origin}/${parts[5].split('.')[0]}`;
@@ -107,6 +109,8 @@ export function determineModuleLabel(module: CodeModule, opts: RegistryOpts): st
       if (parts[3] !== 'std') modName = `/x${modName}`;
       return [[modName, ...parts.slice(7)].join('/'), `from ${parts[2]}`, ...extra];
     }
+    case 'jsr.io':
+      return [`jsr:${parts[3]}/${parts[4]}`];
     case 'crux.land':
       return [module.base.split('//')[1]];
     case 'esm.sh':
@@ -169,6 +173,7 @@ export function determineModuleLabel(module: CodeModule, opts: RegistryOpts): st
 export const ModuleColors = {
   "deno.land/std": "lightgreen",
   "deno.land/x": "lightskyblue",
+  "jsr.io": "gold",
   "crux.land": "greenyellow",
   "cdn.esm.sh": "blanchedalmond",
   "esm.sh": "burlywood",
@@ -202,6 +207,8 @@ export function determineModuleAttrs(module: CodeModule): Record<string,string> 
         return { fillcolor: ModuleColors["deno.land/std"], href: module.base };
       }
       return { fillcolor: ModuleColors["deno.land/x"], href: module.base };
+    case 'jsr.io':
+      return { fillcolor: ModuleColors["jsr.io"], href: module.base };
     case 'crux.land':
       return { fillcolor: ModuleColors["crux.land"], href: module.base };
     case 'aws-api.deno.dev':

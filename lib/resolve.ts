@@ -1,5 +1,8 @@
 // URL -> slug
 export async function findModuleSlug(modUrl: string) {
+  if (modUrl.startsWith('jsr:')) {
+    return 'jsr/'+modUrl.slice(4);
+  }
   if (!modUrl.includes('://')) throw new Error(`That doesn't look like an absolute URL!`);
   const url = new URL(modUrl);
   if (url.protocol !== 'https:') throw new Error(`Only https:// URLs are supported at this time`);
@@ -25,6 +28,9 @@ export async function resolveModuleUrl(modSlug: string) {
 
   } else if (modSlug.startsWith('x/')) {
     return `https://deno.land/x/${modSlug.slice(2)}`;
+
+  } else if (modSlug.startsWith('jsr/')) {
+    return `jsr:${modSlug.slice(4)}`;
 
   } else if (modSlug.startsWith('https/')) {
     return `https://${modSlug.slice(6)}`;
