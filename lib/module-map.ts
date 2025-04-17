@@ -40,7 +40,7 @@ export class ModuleMap {
         totalSize: 0,
         deps: new Set(),
         depsUnversioned: new Set(),
-        files: new Array(),
+        files: [],
       };
       this.modules.set(base + fragment, moduleInfo);
     }
@@ -212,9 +212,11 @@ export function computeDependencies(data: ModuleGraphJson, args: URLSearchParams
 
     case 'dot':
     case null:
-      const lines = new Array<string>();
-      map.emitDOT(line => lines.push(line));
-      return lines.join('\n')+'\n';
+      {
+        const lines = new Array<string>();
+        map.emitDOT(line => lines.push(line));
+        return lines.join('\n')+'\n';
+      }
 
     default:
       throw new Error(`Unexpected format ${JSON.stringify(args.get('format'))}`);
@@ -222,7 +224,7 @@ export function computeDependencies(data: ModuleGraphJson, args: URLSearchParams
 }
 
 if (import.meta.main) {
-  const rawData = new TextDecoder().decode(await Deno.readAll(Deno.stdin));
+  const rawData = await new Response(Deno.stdin.readable).text();
   if (rawData[0] !== '{') throw new Error(`Expected JSON from "deno info --json"`);
   const data = JSON.parse(rawData) as ModuleGraphJson;
 

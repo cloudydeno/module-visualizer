@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --watch --check --allow-sys=hostname --allow-read --allow-net --allow-run=deno,dot --allow-env
+#!/usr/bin/env -S deno run --watch --check --allow-sys --allow-read --allow-net --allow-run=deno,dot --allow-env --allow-import=deno.land,crux.land
 
 import { httpTracer, trace } from "./deps.ts";
 import { serveFont, servePublic, serveTemplatedHtml } from './lib/request-handling.ts';
@@ -8,10 +8,11 @@ import * as DependenciesOf from './feat/dependencies-of/api.ts';
 import * as Shields from './feat/shields/api.ts';
 import * as RegistryKey from './feat/registry-key/api.ts';
 
-let port = 5000;
+let port = 8000;
 try {
   port = parseInt(Deno.env.get('PORT') || port.toString());
-} catch (err) {
+} catch (thrown) {
+  const err = thrown as Error;
   console.error(`WARN: failed to read $PORT due to ${err.name}`);
 }
 

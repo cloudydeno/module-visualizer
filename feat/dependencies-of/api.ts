@@ -106,9 +106,10 @@ async function renderModuleToHtml(modUrl: string, args: URLSearchParams) {
       .slice(fullSvg.indexOf('<!--'))
       .replace(/<svg width="[^"]+" height="[^"]+"/, '<svg '+attrs.join(' '));
 
-  } catch (err) {
+  } catch (thrown) {
+    const err = thrown as Error & {subproc?: SubprocessErrorData};
     if (err.subproc) {
-      const info = err.subproc as SubprocessErrorData;
+      const info = err.subproc;
       return `
         <div id="graph-error">
         <h2>${entities.encode(info.procLabel.toUpperCase())} FAILED</h2>
@@ -121,7 +122,7 @@ async function renderModuleToHtml(modUrl: string, args: URLSearchParams) {
         </div>`.replace(/^ +/gm, '');
     }
     console.error('Graph computation error:', err.stack);
-    return `<div id="graph-error">${entities.encode(err.stack)}</div>`;
+    return `<div id="graph-error">${entities.encode(err.stack ?? '')}</div>`;
   }
 }
 
@@ -136,7 +137,8 @@ async function serveHtmlGraphPage(req: Request, modUrl: string, modSlug: string,
       module_url: entities.encode(modUrl),
       export_prefix: entities.encode(`${req.url}${req.url.includes('?') ? '&' : '?'}format=`),
     });
-  } catch (err) {
+  } catch (thrown) {
+    const err = thrown as Error;
     return makeErrorResponse(err);
   }
 
