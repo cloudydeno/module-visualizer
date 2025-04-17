@@ -5,7 +5,7 @@ ADD fonts/ /usr/share/fonts/truetype/
 ENV DENO_NO_UPDATE_CHECK=1
 WORKDIR /src
 ADD deps.ts .
-RUN deno check deps.ts
+RUN deno check --allow-import=deno.land,crux.land deps.ts
 ADD . .
-RUN deno check entrypoint.ts
+RUN deno check --allow-import=deno.land,crux.land entrypoint.ts
 ENTRYPOINT ["deno","run","--allow-sys","--allow-env","--allow-net","--allow-run=deno,dot","--allow-read=.","--allow-import=deno.land,crux.land","entrypoint.ts"]
