@@ -31,6 +31,7 @@ export async function renderGraph(modUrl: string, dotArgs: string[], args: URLSe
 
   const dotProc = new SubProcess('render', {
     cmd: ["dot", ...dotArgs],
+    env: { },
     stdin: 'piped',
     errorPrefix: /^Error: /,
   });

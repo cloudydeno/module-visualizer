@@ -45,6 +45,7 @@ export async function handleRequest(req: Request, shieldId: string, modSlug: str
 export async function computeGraph(modUrl: string) {
   const downloadData = await new SubProcess('download', {
     cmd: ["deno", "info", "--json", "--allow-import", "--", modUrl],
+    env: { },
     stdin: 'null',
     errorPrefix: /^error: /,
   }).captureAllTextOutput();
