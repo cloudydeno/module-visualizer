@@ -14,6 +14,10 @@ export async function findModuleSlug(modUrl: string) {
       return `https/raw.githubusercontent.com/${owner}/${repo}/${ref}/${path.join('/') || 'deps.ts'}`;
     }
   }
+  // convert jsr URLs into jsr specifiers
+  if (url.host === 'jsr.io') {
+    return `jsr/${url.pathname.slice(1)}`;
+  }
 
   return `${url.protocol.slice(0, -1)}/${url.host}${url.pathname}`;
 }
