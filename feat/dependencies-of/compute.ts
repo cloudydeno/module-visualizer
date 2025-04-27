@@ -11,7 +11,7 @@ export async function computeGraph(
   if (format) args.set('format', format);
 
   const downloadData = JSON.parse(await new SubProcess('download', {
-    cmd: ["deno", "info", "--json", "--", modUrl],
+    cmd: ["deno", "info", "--json", "--allow-import", "--", modUrl],
     env: { "NO_COLOR": "yas" },
     stdin: 'null',
     errorPrefix: /^error: /,
