@@ -5,6 +5,7 @@ import { CodeModule } from "../../lib/types.ts";
 import { resolveModuleUrl } from "../../lib/resolve.ts";
 import { processDenoInfo, ModuleMap } from "../../lib/module-map.ts";
 import { determineModuleAttrs } from "../../lib/module-registries.ts";
+import { defaultEnv } from "../../lib/env.ts";
 
 export async function handleRequest(req: Request, shieldId: string, modSlug: string) {
   const modUrl = await resolveModuleUrl(modSlug);
@@ -45,7 +46,7 @@ export async function handleRequest(req: Request, shieldId: string, modSlug: str
 export async function computeGraph(modUrl: string) {
   const downloadData = await new SubProcess('download', {
     cmd: ["deno", "info", "--json", "--allow-import", "--", modUrl],
-    env: { },
+    env: defaultEnv,
     stdin: 'null',
     errorPrefix: /^error: /,
   }).captureAllTextOutput();
