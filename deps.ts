@@ -16,7 +16,7 @@ export {
   trace,
   context,
   type Context,
-} from "https://deno.land/x/observability@v0.6.1/opentelemetry/api.js";
+} from "https://deno.land/x/observability@v0.10.0/opentelemetry/api.js";
 export {
   httpTracer,
-} from "https://deno.land/x/observability@v0.6.1/instrumentation/http-server.ts";
+} from "https://deno.land/x/observability@v0.10.0/instrumentation/http-server.ts";
