@@ -1,5 +1,4 @@
 import { ModuleGraphJson, SubProcess, trace } from "../../deps.ts";
-import { defaultEnv } from "../../lib/env.ts";
 import { computeDependencies } from "../../lib/module-map.ts";
 
 const tracer = trace.getTracer('dependencies-of')
@@ -13,10 +12,7 @@ export async function computeGraph(
 
   const downloadData = JSON.parse(await new SubProcess('download', {
     cmd: ["deno", "info", "--json", "--allow-import", "--", modUrl],
-    env: {
-      ...defaultEnv,
-      "NO_COLOR": "yas",
-    },
+    env: { "NO_COLOR": "yas" },
     stdin: 'null',
     errorPrefix: /^error: /,
   }).captureAllTextOutput()) as ModuleGraphJson;
@@ -35,7 +31,7 @@ export async function renderGraph(modUrl: string, dotArgs: string[], args: URLSe
 
   const dotProc = new SubProcess('render', {
     cmd: ["dot", ...dotArgs],
-    env: defaultEnv,
+    env: { },
     stdin: 'piped',
     errorPrefix: /^Error: /,
   });
